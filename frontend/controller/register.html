@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            background-color: #eeeadf;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .register-container {
+            padding: 2rem 2.5rem;
+            border-radius: 10px;
+            box-shadow: 0 0 16px #000a;
+            min-width: 320px;
+            background: #fff;
+        }
+        h1, h4 {
+            text-align: center;
+            margin: 1rem;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem; /* for the length of the objects in the form stuff */
+        }
+        input[type="text"], input[type="password"] {
+            padding: 0.6rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            box-sizing: border-box; /* Ensures padding is included in width */
+        }
+        button{
+            padding: 0.7rem;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 0.5rem; /* Space between inputs and button */
+        }
+        button:hover {
+            opacity: 0.8; /* Slight brightening on mouse over */
+        }
+        #registrationMessage {
+            margin-top: 1rem;
+            text-align: center;
+            min-height: 1.2rem; /* Ensures space for the message */
+        }
+        .black-link{
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+    </style>
+    <title>REGISTRATION PAGE</title>
+</head>
+<body>
+<div class="register-container">
+    <h1><center>Simon Game Registration's Page</center></h1>
+    <form id="registration">
+        <h4>Please choose an appropriate username and password.
+                                                                </h4>
+        <input type="text" id="username" placeholder="Choose a username" required>
+        <input type="password" id="password" placeholder="Choose a password" required>
+        <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+        <!-- <input type="text" id="rfid" placeholder="Enter your RFID number (optional)">
+       <label for="controllerId">Controller auswählen:</label>
+        <select id="controllerId" name="controllerId" required>
+             <option value="">-- Wähle einen Controller --</option>
+             Optionen werden per JavaScript eingefügt
+        </select> -->
+        <button type="submit">Register</button><br>
+        <div class="back-link">
+            Already have an account? <a href="loginPage.html">Back to Login</a>
+        </div>
+    </form>
+    <div id="registrationMessage"></div>
+</div>
+
+<script>
+    document.getElementById('registration').addEventListener('submit', async function(e){
+        e.preventDefault();
+        console.log("ich bin hier");
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        //const rfid = document.getElementById('rfid').value;
+
+        const msgDiv = document.getElementById('registrationMessage');
+        if(password !== confirmPassword || username.isEmpty()){
+
+            msgDiv.textContent = 'Passwords do not match or username is empty!';
+            msgDiv.style.color = 'red';
+            return;
+        }
+            console.log("ich bin hier");
+        const response = await fetch('http://localhost:8080/api/players/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json'},
+            body:JSON.stringify({
+                userName: username,
+                password: password,
+               // rfid: rfid ? rfid : null // Optional RFID
+            })
+        });
+
+        const result = await response.json();
+        if(response.ok){
+            console.log("isok");
+            msgDiv.textContent = 'Registration successful! Redirecting to login page...';
+            msgDiv.style.color = 'green';
+            setTimeout(() => {
+                window.location.href = "loginPage.html";
+            }, 1500);
+        }else{
+            msgDiv.textContent = result.error || "Registration failed!";
+            msgDiv.style.color = 'red';
+        }
+    });
+</script>
+</body>
+</html>

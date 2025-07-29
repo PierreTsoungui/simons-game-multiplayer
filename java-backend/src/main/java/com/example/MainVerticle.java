@@ -2,6 +2,7 @@ package com.example;
 
 import java.util.List;
 
+import com.example.player.PlayerController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class MainVerticle extends AbstractVerticle {
     public void start(Promise<Void> startPromise) {
         setupJDBCPool();
 
-        GameStateManager.getInstance(vertx);
+        GameStateManager gsm=  GameStateManager.getInstance(vertx);
 
         MqttVerticle mqtt = new MqttVerticle();
         HttpServerVerticle http = new HttpServerVerticle();
@@ -55,7 +56,7 @@ public class MainVerticle extends AbstractVerticle {
     private void setupHttpVerticle(HttpServerVerticle httpVerticle) {
 
         final List<HttpController> controllers = List.of(
-                new ObjectController(vertx)
+                new ObjectController(vertx),new PlayerController(vertx)
         );
 
         controllers.forEach(it -> it.registerRoutes(httpVerticle.router));
