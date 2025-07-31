@@ -1,8 +1,10 @@
 package com.example.mqtt;
 
+import java.util.List;
 import java.util.Map;
 
 import com.example.game.GameStateManager;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,10 +54,16 @@ public class MqttController {
             logger.info("Message received via EventBus: 'mqtt.message'");
             mqttService.publishDemoMessage(msg.body().toString());
         });
-        /*this.eventBus.consumer("simon.game.publishRegCtrls", msg -> {
+        this.eventBus.consumer("group-24.simon.game.publishRegCtrls", msg -> {
             logger.info("Message received via EventBus: 'game.publishRegCtrls'");
-            mqttService.publishRegisterControllers(msg.body().toString());
-        });*/
+            JsonArray controllers = (JsonArray) msg.body();
+            @SuppressWarnings("unchecked")
+            List<String> controllerList = controllers.getList();
+            mqttService.publishRegisterControllers(controllerList);
+
+        });
+
+
     }
 
     public void registerMqttConsumers() {

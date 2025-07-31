@@ -17,7 +17,7 @@ public class MqttService {
     private final MqttClient mqttClient;
 
     private static final Logger logger = LoggerFactory.getLogger(MqttService.class);
-    final String mqttMessagePrefix = System.getenv("MQTT_MESSAGE_PREFIX") != null ? System.getenv("MQTT_MESSAGE_PREFIX") : "test/";
+    final String mqttMessagePrefix = System.getenv("MQTT_MESSAGE_PREFIX") != null ? System.getenv("MQTT_MESSAGE_PREFIX") : "group-24/";
 
     public MqttService(MqttClient mqttClient) {
         this.mqttClient = mqttClient;
@@ -51,7 +51,8 @@ public class MqttService {
         JsonArray activeCtrls = new JsonArray(controllers);
         JsonObject data = new JsonObject().put("activeControllers", activeCtrls);
         mqttClient.publish(mqttMessagePrefix + "simon/game/publishRegCtrls", data.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
-        logger.info("📡 MQTT published controllers: {}", data);
+
+        logger.info("📡 MQTT published controllers : {} on {}", data,mqttMessagePrefix);
     }
 
 
