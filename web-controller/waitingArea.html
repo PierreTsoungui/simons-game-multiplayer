@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiting Area</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eeeadf;
+            margin: 0;
+            display:flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1{
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        table{
+            border-collapse: collapse;
+            width: 80%;
+            margin: 2rem auto 1rem auto;
+            background: #fff;
+            box-shadow: 0 0 100px #0002;
+        }
+        th, td{
+            border: 1px solid #bbb;
+            padding: 0.7rem 1.2rem;
+            text-align:center;
+        }
+        th{
+            background: #4CAF50;
+            color: #fff;
+        }
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }/* Zebra striping for table rows */
+        .button-group{
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem 0 2rem 0;
+        }
+        button{
+            padding: 0.8rem 2rem;
+            font-size: 1.3rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            transition: background 0.3s;
+        }
+        button#highscore{
+            background-color: #2196f3; /* Different color for highscore button */
+        }
+        button#logout{
+            background-color: #f44336; /* Different color for logout button */
+        }
+        button:hover{
+            opacity: 0.8; /* Slight brightening on mouse over */
+        }
+        button#startGame{
+            background-color: #032963; /* Darker blue */
+        }
+        /*small logo*/
+        .simon-logo {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem auto;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .simon-quarter {
+            width: 40px;
+            height: 40px;
+            border-radius: 0 100% 0 0;
+            margin: 0;
+        }
+        .simon-quarter.green   { background: #2ecc71; transform: rotate(0deg); }
+        .simon-quarter.red     { background: #e74c3c; transform: rotate(90deg); }
+        .simon-quarter.yellow  { background: #f1c40f; transform: rotate(270deg); }
+        .simon-quarter.blue    { background: #3498db; transform: rotate(180deg); }
+        .simon-logo .simon-quarter {
+            float: left;
+        }
+        .simon-logo.rotating {
+            animation: rotate-logo 1s linear;
+        }
+        @keyframes rotate-logo {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+<h1><center>Waiting Area - Simon's Game Lobby</center></h1>
+<div class="simon-logo">
+    <div class="simon-quarter green"></div>
+    <div class="simon-quarter red"></div>
+    <div class="simon-quarter yellow"></div>
+    <div class="simon-quarter blue"></div>
+</div>
+<table border="1" cellspacing="0" cellpadding="5">
+    <thead>
+    <tr>
+        <th>Player Name</th>
+        <th>ControllerID</th>
+        <th>Player status</th>
+        <th>Game Round</th>
+        <th>Total Move Time</th>
+    </tr>
+    </thead>
+    <tbody id="lobbyTableBody">
+    <!-- Player data will be dynamically inserted here -->
+    </tbody>
+</table>
+<div class="button-group">
+    <button id="startGame">Start Game</button>
+    <button id="highscore">Highscore</button>
+    <button id="logout">Logout</button>
+</div>
+</body>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchWaitingAreaData();
+    });
+
+    function fetchWaitingAreaData() {
+        fetch('/http://localhost:8080/api/waitingArea') // dein Endpoint im Backend
+            .then(response => {
+                if (!response.ok) throw new Error("Fehler beim Abrufen der Daten");
+                return response.json();
+            })
+            .then(players => {
+                const tbody = document.getElementById("waiting-table-body");
+                tbody.innerHTML = ""; // leeren
+
+                players.forEach(player => {
+                    const row = document.createElement("tr");
+
+                    row.innerHTML = `
+              <td>${player.playerName}</td>
+              <td>${player.controllerId}</td>
+              <td>${player.status ? "Bereit" : "Nicht bereit"}</td>
+              <td>${player.round}</td>
+              <td>${formatMilliseconds(player.totalMoveTime)}</td>
+            `;
+
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error("Fehler beim Laden der Waiting Area:", error);
+            });
+    }
+
+
+    //alter Code unten
+    document.getElementById('startGame').addEventListener('click', async function(){
+        const response = await fetch('http://localhost:8080/api/game/start', {
+            method: 'POST',
+        });
+
+        if(response.ok){
+            // Redirect to the controller page after starting the game
+            setTimeout(() => {
+                window.location.href = "controller.html";
+            }, 500);
+        }else{
+            alert("Failed to start the game!");
+        }
+    });
+    document.getElementById('logout').addEventListener('click', function() {
+        localStorage.clear(); // Clear local storage
+        window.location.href = "loginPage.html";
+    });
+    document.getElementById('highscore').addEventListener('click', function(){
+        window.location.href = "highscore.html";
+    });
+
+    //Rotation  of the small logo
+    document.querySelector('.simon-logo').addEventListener('click',function() {
+        this.classList.add('rotating');
+        setTimeout(() => {
+            this.classList.remove('rotating');
+        }, 1000); // rotation's duration
+    });
+
+
+
+</script>
+</html>

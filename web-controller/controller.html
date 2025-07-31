@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Simon Game Webcontroller</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script  src="env.js"></script>
+    <script defer type="module" src="controller.js"></script>
+    <link rel="stylesheet" href="controller.css" />
+    <link rel="icon" type="image/x-icon" href="simon_favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background: radial-gradient(ellipse at center, #7c7f81 0%, #1c1c1c 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      h1 {
+        text-align: center;
+        margin-top: 30px;
+        color: #fff;
+        letter-spacing: 2px;
+        text-shadow: 0 2px 8px #000a;
+      }
+      #controllerId {
+        font-size: 1.1rem;
+        color: #aaa;
+      }
+      .lcd-display {
+        margin: 0 auto 30px auto;
+        width: 340px;
+        background: #181818;
+        border-radius: 10px;
+        padding: 16px 0;
+        color: #0f0;
+        font-family: monospace;
+        font-size: 1.3rem;
+        box-shadow: 0 0 18px #0008;
+        text-align: center;
+      }
+      .lcd-line { height: 1.5em; }
+      .joystick-container {
+        position: relative;
+        width: 440px;
+        height: 440px;
+        margin: 0 auto 40px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .color-button {
+        position: absolute;
+        width: 170px;
+        height: 170px;
+        border-radius: 50%;
+        border: none;
+        opacity: 0.98;
+        box-shadow: 0 0 20px #0007;
+        cursor: pointer;
+        transition: transform 0.1s, filter 0.1s;
+        font-size: 1.5rem;
+      }
+      .color-button.green   { background: #2ecc71; top: 0; left: 135px; }
+      .color-button.red     { background: #e74c3c; right: 0; top: 135px; }
+      .color-button.yellow  { background: #f1c40f; left: 0; top: 135px; }
+      .color-button.blue    { background: #3498db; bottom: 0; left: 135px; }
+      .color-button:active,
+      .color-button.active  { filter: brightness(1.25) drop-shadow(0 0 12px #fff8); transform: scale(1.08);}
+      .joystick-center {
+        position: absolute;
+        left: 135px; top: 135px;
+        width: 170px; height: 170px;
+        background: #222;
+        border-radius: 50%;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 2.2rem;
+        font-weight: bold;
+        box-shadow: 0 0 30px #000b;
+        border: 4px solid #444;
+        letter-spacing: 2px;
+      }
+      @media (max-width: 600px) {
+        .joystick-container { width: 98vw; height: 98vw; max-width: 98vw; max-height: 98vw;}
+        .color-button, .joystick-center { width: 32vw; height: 32vw; left: unset; top: unset;}
+        .color-button.green   { top: 0; left: 33vw;}
+        .color-button.red     { right: 0; top: 33vw;}
+        .color-button.yellow  { left: 0; top: 33vw;}
+        .color-button.blue    { bottom: 0; left: 33vw;}
+        .joystick-center { left: 33vw; top: 33vw;}
+        .lcd-display { width: 90vw; font-size: 1.1rem;}
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Webcontroller <small id="controllerId">(id)</small></h1>
+    <div class="lcd-display">
+      <div class="lcd-line"></div>
+      <div class="lcd-line"></div>
+      <div class="lcd-line"></div>
+    </div>
+    <div class="joystick-container">
+      <button class="color-button green"   data-color="green"  data-tone="329"></button>
+      <button class="color-button red"     data-color="red"    data-tone="261"></button>
+      <button class="color-button yellow"  data-color="yellow" data-tone="392"></button>
+      <button class="color-button blue"    data-color="blue"   data-tone="195"></button>
+      <div class="joystick-center">●</div>
+    </div>
+    <script>
+      // Controller-ID aus URL übernehmen und anzeigen
+      console.log("MQTT_BROKER_URL: ", window.__ENV__.MQTT_BROKER_URL);
+      console.log("MQTT_BROKER_PORT: ", window.__ENV__.MQTT_BROKER_PORT);
+      console.log("MQTT_USERNAME: ", window.__ENV__.MQTT_USERNAME);
+      console.log("MQTT_PASSWORD: ", window.__ENV__.MQTT_PASSWORD);
+      console.log("MQTT_MESSAGE_PREFIX: ", window.__ENV__.MQTT_MESSAGE_PREFIX);
+      const params = new URLSearchParams(window.location.search);
+      const controllerId = params.get('controllerId') || 'unbekannt';
+      document.getElementById('controllerId').textContent = controllerId;
+    </script>
+  </body>
+</html>
+

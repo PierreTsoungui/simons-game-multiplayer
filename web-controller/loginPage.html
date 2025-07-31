@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LOGIN PAGE</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script  src="env.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -106,12 +108,9 @@
         <input type="text" id="username" placeholder="Enter your username" required><br><br>
         <input type="password" id="password" placeholder="Enter your password" required><br><br>
         <button type="button" id="open-controller-btn">New Controller</button>
-        <label for="controllerId">Controllerauswahl:</label>
-        <select id="controllerId" name="controllerId" required>
+        <label for="controllerIds">Controllerauswahl:</label>
+        <select id="controllerIds" name="controllerId" required>
             <option value="">-- Wähle einen Controller --</option>
-            <option value="webcontroller">Web Controller</option>
-
-
         </select>
         <button type="submit">Login and add the player to the Lobby</button><br><br>
     </form>
@@ -123,11 +122,13 @@
 </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {// Handle form submission
+        let mqttMessagePrefix = window.__ENV__.MQTT_MESSAGE_PREFIX || 'simon/game/';
+
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {// Handle form submission
             e.preventDefault();// Prevent the default form submission behavior,meaning the page will not reload
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const controllerId = document.getElementById('controllerId').value;
+            const controllerId = document.getElementById('controllerIds').value;
 
             //Case validation handling on the username, password and controllerId like empty fields...
             if(username.trim() === "" || password.trim() === "" || controllerId.trim() === ""){
@@ -142,7 +143,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     playerName: username,
-                    hashPassword: password,
+                    password: password,
                     controllerId: controllerId//helps know if we are using a web or a hard controller
                 })
             });
@@ -174,22 +175,28 @@
             console.log('✅ Connected to MQTT broker');
             client.subscribe(mqttMessagePrefix +'simon/game/publishRegCtrls', err => {
                 if (err) console.error('❌ Subscription Error:', err);
+                else console.log('📡 Subscribed to: publishRegCtrls');
 
-                client.on('message', (topic, payload) => {
-                    const msg = JSON.parse(payload.toString());
-                    msg.activeControllers.forEach(ctrl => {
-                        console.log("Active Controllers:", ctrl);
-                    });
-                });
 
             });
+
         });
 
-        client.on('message', (topic, message) => {
-            const msg = message.toString();
+        client.on('message', (topic, payload) => {
+            const msg = JSON.parse(payload.toString());
+            console.log(`📥 Message received [${topic}]:`, msg);
+            let dropDownCIds= document.getElementById("controllerIds")
+            dropDownCIds.innerHTML = '<option value="">-- Wähle einen Controller --</option>';
+
+            msg.activeControllers.forEach((ctrl, i) => {
+                const option = document.createElement("option");
+                option.value = ctrl;
+                option.textContent = `Web-Controller ${i + 1}`;
+                dropDownCIds.appendChild(option);
+            });
+
             console.log(`📥 Message received [${topic}]:`, msg);
         });
-
     </script>
 </body>
 </html>
