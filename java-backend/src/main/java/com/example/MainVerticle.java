@@ -26,7 +26,7 @@ public class MainVerticle extends AbstractVerticle {
     public void start(Promise<Void> startPromise) {
         setupJDBCPool();
 
-        GameStateManager gsm=  GameStateManager.getInstance(vertx);
+        GameStateManager gsm =  GameStateManager.getInstance(vertx);
 
         MqttVerticle mqtt = new MqttVerticle();
         HttpServerVerticle http = new HttpServerVerticle();
