@@ -88,21 +88,21 @@
 <script>
     document.getElementById('registration').addEventListener('submit', async function(e){
         e.preventDefault();
-        console.log("ich bin hier");
+        console.log("ich habe .js gestartet");
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
         //const rfid = document.getElementById('rfid').value;
 
         const msgDiv = document.getElementById('registrationMessage');
-        if(password !== confirmPassword || username.isEmpty()){
+        if(password !== confirmPassword || username.trim()===""){
 
             msgDiv.textContent = 'Passwords do not match or username is empty!';
             msgDiv.style.color = 'red';
             return;
         }
-            console.log("ich bin hier");
-        const response = await fetch('http://localhost:8080/api/players/register', {
+
+        const response = await fetch('http://localhost:8080//api/players/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json'},
             body:JSON.stringify({
@@ -114,7 +114,8 @@
 
         const result = await response.json();
         if(response.ok){
-            console.log("isok");
+            console.log("ich bin hier");
+
             msgDiv.textContent = 'Registration successful! Redirecting to login page...';
             msgDiv.style.color = 'green';
             setTimeout(() => {
