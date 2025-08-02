@@ -135,25 +135,37 @@
     });
 
     function fetchWaitingAreaData() {
-        fetch('/http://localhost:8080/api/waitingArea') // dein Endpoint im Backend
+        fetch('http://localhost:8080/api/waitingArea') // dein Endpoint im Backend
             .then(response => {
-                if (!response.ok) throw new Error("Fehler beim Abrufen der Daten");
+                if (!response.ok) console.log("Fehler beim Abrufen der Daten");
                 return response.json();
             })
-            .then(players => {
-                const tbody = document.getElementById("waiting-table-body");
+            .then(data => {
+                const tbody = document.getElementById("lobbyTableBody");
                 tbody.innerHTML = ""; // leeren
 
-                players.forEach(player => {
-                    const row = document.createElement("tr");
+                data.waitingAreaData.forEach(player => {
+                    const row = document.createElement('tr');
 
-                    row.innerHTML = `
-              <td>${player.playerName}</td>
-              <td>${player.controllerId}</td>
-              <td>${player.status ? "Bereit" : "Nicht bereit"}</td>
-              <td>${player.round}</td>
-              <td>${formatMilliseconds(player.totalMoveTime)}</td>
-            `;
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = player.playerName;
+                    row.appendChild(nameCell);
+
+                    const controllerCell = document.createElement('td');
+                    controllerCell.textContent = player.controllerId;
+                    row.appendChild(controllerCell);
+
+                    const statusCell = document.createElement('td');
+                    statusCell.textContent = player.status ? 'ready' : 'not ready';
+                    row.appendChild(statusCell);
+
+                    const roundCell = document.createElement('td');
+                    roundCell.textContent = player.round;
+                    row.appendChild(roundCell);
+
+                    const timeCell = document.createElement('td');
+                    timeCell.textContent = player.totalMoveTime;
+                    row.appendChild(timeCell);
 
                     tbody.appendChild(row);
                 });
