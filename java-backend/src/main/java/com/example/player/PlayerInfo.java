@@ -7,17 +7,18 @@ import java.util.Map;
 import java.util.stream.Collector;
 
 public class PlayerInfo {
-
+    public String playerName;
     public String controllerId;
     public int gameRound;
     public  boolean ready;
     public  long totalMoveTime; // in Sekunden oder Millisekunden
 
-    public PlayerInfo(String controllerId, int gameRound, boolean ready, long totalMoveTime) {
+    public PlayerInfo(String controllerId, int gameRound, boolean ready, long totalMoveTime, String playerName) {
         this.controllerId = controllerId;
         this.gameRound = gameRound;
         this.ready = ready;
         this.totalMoveTime = totalMoveTime;
+        this.playerName = playerName;
     }
 
 
@@ -40,8 +41,8 @@ public class PlayerInfo {
     }
 
 
-    public void setReady(boolean ready) {
-        this.ready = ready;
+    public void setReady(boolean status) {
+        this.ready = status;
     }
 
     public long getTotalMoveTime() {
@@ -69,18 +70,18 @@ public class PlayerInfo {
 
         return String.format("%02d:%02d:%02d", hours, minutes, remainingSeconds);
     }
-    public JsonArray dataWaitingArea(Map<String, PlayerInfo> playerInfos) {
-        JsonArray jsonArray = playerInfos.entrySet().stream()
+    public static JsonArray dataWaitingArea(Map<String, PlayerInfo> playerInfos) {
+         return playerInfos.entrySet().stream()
                 .map(entry -> {
                     String playerName = entry.getKey();
                     PlayerInfo infos = entry.getValue();
 
                     JsonObject json = new JsonObject()
-                            .put("playerName", playerName)
+                            .put("playerName", infos.playerName)
                             .put("controllerId", infos.controllerId)
                             .put("status", infos.ready)
                             .put("round", infos.gameRound)
-                            .put("totalMoveTime", infos.totalMoveTime);
+                            .put("totalMoveTime", infos.formatMillis(infos.totalMoveTime));
 
                     return json;
                 })
@@ -89,10 +90,20 @@ public class PlayerInfo {
                         JsonArray::add,
                         JsonArray::addAll
                 ));
-        return jsonArray;
+
     }
-/*
-    @Override
+
+
+   public  static JsonObject jsonFromPlayer(PlayerInfo playerInfo) {
+        JsonObject json = new JsonObject();
+        json.put("playerName", playerInfo.playerName);
+        json.put("controllerId", playerInfo.controllerId);
+        json.put("gameRound", playerInfo.gameRound);
+        json.put("ready", playerInfo.ready);
+        json.put("totalMoveTime", playerInfo.totalMoveTime);
+        return json;
+    }
+   /* @Override
     public String toString() {
         return "PlayerInfo{" +
                 "controllerId='" + controllerId + '\'' +

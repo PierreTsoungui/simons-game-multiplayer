@@ -14,6 +14,7 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collector;
 
@@ -22,8 +23,7 @@ public class PlayerController implements HttpController {
     private static final Logger logger = LoggerFactory.getLogger(PlayerController.class);
     private final PlayerService playerService;
     private final EventBus eventBus;
-    private GameStateManager gsm;
-    private PlayerInfo playerInfo;
+    private GameStateManager gsm;;
     public PlayerController(Vertx vertx) {
         this.eventBus = vertx.eventBus();
         this.playerService = new PlayerService();
@@ -34,7 +34,7 @@ public class PlayerController implements HttpController {
         router.post("/api/players/register").handler(this::handleCreate);
         router.post("/api/players/login").handler(this::handleLogin);
         router.get("/api/waitingArea").handler(this::handleWaitingArea);
-
+        router.get("/api/controller/active").handler(this::getActiveController);
        /* router.post("/api/logout").handler(this.handlerLogout);
         router.delete("/api/player/:id").handler(this.HandlerDelete);
         router.patch("/api/player/:id").handler(this.HandlerUpdate);*/
@@ -99,6 +99,9 @@ public class PlayerController implements HttpController {
                                 .end(new JsonObject().put("message", "Login successful").encode());
                         logger.debug("Login successful");
                         logger.info("Event published: player.logged in with name: {}", playerName);
+                        PlayerInfo p = new PlayerInfo( controllerId,0,false, 0,playerName);
+                        JsonObject js = PlayerInfo.jsonFromPlayer(p) ;
+                        this.eventBus.publish("group-24.simon.game.events.playerJoined", new JsonObject().put(" waitingAreaData", js));
                     }else {
                         String errorMsg = res.cause() != null ? res.cause().getMessage() : "Unknown error";
                         ctx.response()
@@ -116,13 +119,12 @@ public class PlayerController implements HttpController {
             }
         }
     private void handleWaitingArea(RoutingContext ctx) {
-        JsonObject json = new JsonObject();
 
         ctx.response()
                 .putHeader("Content-Type", "application/json")
                 .setStatusCode(200)
-                .end(new JsonObject().put("waitingAreaData", playerInfo.dataWaitingArea(gsm.getPlayerInfos())).encode());
-        logger.debug("Player informations successfully fetched  : {}", playerInfo.dataWaitingArea(gsm.getPlayerInfos()));
+                .end(new JsonObject().put("waitingAreaData", PlayerInfo.dataWaitingArea(gsm.getPlayerInfos())).encode());
+        logger.debug("Player informations successfully fetched  : {}", PlayerInfo.dataWaitingArea(gsm.getPlayerInfos()));
     }
 
 
@@ -175,6 +177,14 @@ public class PlayerController implements HttpController {
         }
     }
 
+
+    private void getActiveController(RoutingContext ctx) {
+        JsonArray jsonArray = new JsonArray(gsm.getActiveControllers());
+        ctx.response()
+                .putHeader("Content-Type", "application/json")
+                .setStatusCode(200)
+                .end(jsonArray.encode());
+    }
 
 
 }
