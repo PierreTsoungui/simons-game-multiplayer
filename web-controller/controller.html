@@ -107,7 +107,7 @@
       <div class="lcd-line"></div>
     </div>
     <div class="joystick-container">
-      <button class="color-button green"   data-color="green"  data-tone="329"></button>
+      <button class="color-button green"   data-color="green"  data-tone="329" id="ready"></button>
       <button class="color-button red"     data-color="red"    data-tone="261"></button>
       <button class="color-button yellow"  data-color="yellow" data-tone="392"></button>
       <button class="color-button blue"    data-color="blue"   data-tone="195"></button>
@@ -120,9 +120,6 @@
       console.log("MQTT_USERNAME: ", window.__ENV__.MQTT_USERNAME);
       console.log("MQTT_PASSWORD: ", window.__ENV__.MQTT_PASSWORD);
       console.log("MQTT_MESSAGE_PREFIX: ", window.__ENV__.MQTT_MESSAGE_PREFIX);
-      const params = new URLSearchParams(window.location.search);
-      const controllerId = params.get('controllerId') || 'unbekannt';
-      document.getElementById('controllerId').textContent = controllerId;
     </script>
   </body>
 </html>

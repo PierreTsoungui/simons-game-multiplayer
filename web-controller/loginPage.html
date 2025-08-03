@@ -122,6 +122,41 @@
 </div>
 
     <script>
+
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchActiveController();
+
+        });
+
+        function fetchActiveController(){
+            fetch('http://localhost:8080/api/controller/active') // dein Endpoint im Backend
+                .then(response => {
+                    if (!response.ok) console.log("Fehler beim Abrufen der Daten");
+                    return response.json();
+                })
+                .then(data => {
+                    showAvailableController(data)
+
+                })
+                .catch(error => {
+                    console.error("Fehler beim Laden der Waiting Area:", error);
+                });
+
+        }
+
+        function showAvailableController(data){
+            let dropDownCIds = document.getElementById("controllerIds")
+            dropDownCIds.innerHTML = '<option value="">-- Wähle einen Controller --</option>';
+
+            data.forEach((ctrl, i) => {
+
+                const option = document.createElement("option");
+                option.value = ctrl;
+                option.textContent = `Web-Controller ${i + 1}`;
+                dropDownCIds.appendChild(option);
+            });
+        }
         let mqttMessagePrefix = window.__ENV__.MQTT_MESSAGE_PREFIX || 'simon/game/';
 
             document.getElementById('loginForm').addEventListener('submit', async function(e) {// Handle form submission
@@ -164,9 +199,9 @@
         document.getElementById('open-controller-btn').onclick = function(e) {
 
             window.open('controller.html', '_blank', 'noopener,noreferrer');
-// Open the controller in a new tab
+
         };
-        //Handle activeControllers
+        //MQTT
         const client = mqtt.connect("ws://" + window.__ENV__.MQTT_BROKER_URL + ":" + window.__ENV__.MQTT_BROKER_PORT , {
             username: window.__ENV__.MQTT_USERNAME,
             password: window.__ENV__.MQTT_PASSWORD,
@@ -185,15 +220,8 @@
         client.on('message', (topic, payload) => {
             const msg = JSON.parse(payload.toString());
             console.log(`📥 Message received [${topic}]:`, msg);
-            let dropDownCIds= document.getElementById("controllerIds")
-            dropDownCIds.innerHTML = '<option value="">-- Wähle einen Controller --</option>';
 
-            msg.activeControllers.forEach((ctrl, i) => {
-                const option = document.createElement("option");
-                option.value = ctrl;
-                option.textContent = `Web-Controller ${i + 1}`;
-                dropDownCIds.appendChild(option);
-            });
+            showAvailableController(msg.activeControllers);
 
             console.log(`📥 Message received [${topic}]:`, msg);
         });

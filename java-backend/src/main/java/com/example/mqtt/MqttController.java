@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.game.GameStateManager;
+import com.example.player.PlayerInfo;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.mariadb.jdbc.util.ParameterList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +65,12 @@ public class MqttController {
 
         });
 
+        this.eventBus.consumer("group-24.simon.game.events.playerJoined", msg -> {
+            logger.info("Message received via EventBus: 'game.publishPlayerJoined'");
+            JsonObject playerData = (JsonObject) msg.body();
+            mqttService.publishJoinedPlayerInfo(playerData);
+        });
+
 
     }
 
@@ -83,7 +91,22 @@ public class MqttController {
                         logger.info("Simon controller message received: {}", payload.toString());
                         gsm.addActiveControllers(payload.toString());
                         mqttService.publishRegisterControllers(gsm.getActiveControllers());
-                    }else {
+                    }else if(topic.startsWith(mqttMessagePrefix + "simon/game/player/status/")) {
+                        logger.info("Simon  controllerStatus message received: {}", payload.toString());
+                            String prefix=mqttMessagePrefix + "simon/game/player/status/";
+                        String controllerId= topic.substring(prefix.length());
+
+                        String playerId= gsm.playerIdFromControllerId(controllerId);
+                        logger.info("PlayerId: {} on {}", playerId,controllerId);
+                        if(playerId != null){
+                            PlayerInfo infos= gsm.getPlayerInfos().get(playerId);
+                           boolean status=  Boolean.parseBoolean(payload.toString());
+                           infos.setReady(status);
+                            mqttService.publishStatusUpdate(controllerId, status);
+                        }
+
+                    }
+                    else {
                         logger.info("Handler for topic: {} not implemented", topic);
                     }
 
@@ -92,8 +115,8 @@ public class MqttController {
         mqttClient.subscribe(Map.of(
                 mqttMessagePrefix + "demo/hello_world", 0,
                 mqttMessagePrefix + "output", 0,
-                mqttMessagePrefix + "simon/game/registerController", 0
-
+                mqttMessagePrefix + "simon/game/registerController", 0,
+                mqttMessagePrefix + "simon/game/player/status/+",0
         ));
 
     }

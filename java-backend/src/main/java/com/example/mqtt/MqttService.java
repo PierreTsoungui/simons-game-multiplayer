@@ -54,11 +54,20 @@ public class MqttService {
 
         logger.info("📡 MQTT published controllers : {} on {}", data,mqttMessagePrefix);
     }
-
+    public void publishStatusUpdate(String controllerId, boolean ready) {
+        JsonObject data = new JsonObject()
+                                .put("controllerId", controllerId)
+                                .put("status", ready);
+        logger.info("📡 MQTT published  controllerStatus : {} on {}", data,mqttMessagePrefix);
+        mqttClient.publish(mqttMessagePrefix +"simon/game/events/status/changed" , data.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
+    }
 
     /// MqttService.java
     public void publishColorSequence(JsonArray sequence, int round) {
         JsonObject data = new JsonObject().put("sequence", sequence).put("round", round);
         mqttClient.publish(mqttMessagePrefix +"simon/game/sequence", data.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
+    }
+    public void publishJoinedPlayerInfo(JsonObject playerData) {
+        mqttClient.publish(mqttMessagePrefix +"/simon/game/events/playerJoined", playerData.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
     }
 }

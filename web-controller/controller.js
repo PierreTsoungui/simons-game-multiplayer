@@ -1,9 +1,9 @@
 // Get controller id from query parameter 'id'
-console.log("yooo")
 const controllerIdElement = document.getElementById('controllerId');
 const params = new URLSearchParams(window.location.search);
 let controllerId = params.get('id');
 let mqttMessagePrefix = window.__ENV__.MQTT_MESSAGE_PREFIX || 'simon/game/';
+let isGameActive= false;
 
 // Generate controller id and append to URL if not given
 if (!controllerId) {
@@ -14,7 +14,6 @@ if (!controllerId) {
 
 }
 controllerIdElement.innerText = controllerId;
-
 // Connect to Mosquitto server, subscribe and receive messages on topic 'simon/game/#'
 // https://github.com/mqttjs/MQTT.js
 const client = mqtt.connect("ws://" + window.__ENV__.MQTT_BROKER_URL + ":" + window.__ENV__.MQTT_BROKER_PORT , {
@@ -24,21 +23,61 @@ const client = mqtt.connect("ws://" + window.__ENV__.MQTT_BROKER_URL + ":" + win
 });
 client.on('connect', () => {
     console.log('✅ Connected to MQTT broker');
-    client.subscribe(mqttMessagePrefix +'simon/game/#', err => {
+    client.subscribe(mqttMessagePrefix +'simon/game/+', err => {
         if (err) console.error('❌ Subscribe Fehler:', err);
-        publishMessage(controllerId);
+        else {
+            console.log(`📡 Subscribed to: simon/game/+`);
+            myPublishMessage("simon/game/registerController", controllerId);
+        }
     });
 });
+
+document.querySelectorAll(".color-button").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+        if (isGameActive) {
+
+        }else{
+            const color = btn.getAttribute("data-color");
+
+            if(color=== "green"){
+
+                myPublishMessage("simon/game/player/status", "true", true);
+            }
+            else if(color==="red"){
+                myPublishMessage("simon/game/player/status", "false",true);
+
+            }
+        }
+    });
+
+    });
+
 
 client.on('message', (topic, message) => {
     const msg = message.toString();
     console.log(`📥 Message received [${topic}]:`, msg);
 });
 
+
+
+
+function myPublishMessage(topic, message, appendControllerId = false){
+
+        let fullTopic = mqttMessagePrefix + topic;
+        if (appendControllerId) {
+            fullTopic += `/${controllerId}`;
+        }
+        client.publish(fullTopic, message);
+    }
+
+
+
+
+
 function publishMessage(message) {
 
     //client.publish(mqttMessagePrefix +`simon/game/start`, message);
-    client.publish(mqttMessagePrefix + `simon/game/registerController`, message);
+  //client.publish(mqttMessagePrefix + `simon/game/registerController`, message);
 }
 
 function updateLCD(textLine1, textLine2, textLine3) {
