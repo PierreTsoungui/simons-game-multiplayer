@@ -121,12 +121,12 @@ public class GameStateManager {
 
     }
 
-    public boolean addPlayerToController(String playerId, String controllerId) {
+    public boolean addPlayerToController(String playerId, String controllerId, String playerName) {
                 logger.info("List of Controllers: {}", activeControllers);
                 if(activeControllers.contains(controllerId)) {
                     addActivePlayers(playerId);
                     playerToController.put(playerId, controllerId);
-                    playerInfos.put(playerId, new PlayerInfo(controllerId, 0, false, 0));
+                    playerInfos.put(playerId, new PlayerInfo(controllerId, 0, false, 0, playerName));
                     removeActiveControllers(controllerId);
                     JsonArray jsonArray = new JsonArray(activeControllers);
                     //JsonObject data = new JsonObject().put("activeControllers", new JsonArray(activeControllers));
@@ -140,7 +140,20 @@ public class GameStateManager {
     }
 
 
+    public  String playerIdFromControllerId(String controllerId) {
+
+        for(Map.Entry<String,PlayerInfo> entry: playerInfos.entrySet()){
+            if(entry.getValue().controllerId.equals(controllerId)){
+                return entry.getKey();
+            }
+
+        }
+        return null;
+    }
+
 }
+
+
 
 
 
