@@ -39,9 +39,6 @@ public class PlayerController implements HttpController {
         router.post("/api/game/start").handler(this::handleStartGame);
         router.patch("/api/players/updateProfile").handler(this::handleProfileUpdate);
         router.post("/api/controller/disconnect").handler(this::handleControllerDisconnect);
-       /* router.
-       /* router.delete("/api/player").handler(this.HandleDelete);
-        router.patch("/api/player).handler(this.HandleUpdate);*/
 
 
     }
@@ -106,6 +103,7 @@ public class PlayerController implements HttpController {
                     ctx.response().setStatusCode(201).putHeader("content-type", "application/json")
                             .end(new JsonObject()
                                     .put("message", "Login successful").put("playerId", playerId).put("playerName", playerName).encode());
+                    gsm.getEventBus().publish("group-24.simon.game.players.loggedIn", new JsonObject().put("playerName", playerName).put("controllerId", controllerId));
                     logger.debug("Login successful");
                     logger.info("Event published: player.logged in with name: {}", playerName);
 
@@ -188,7 +186,7 @@ public class PlayerController implements HttpController {
             ctx.response()
                     .setStatusCode(400)
                     .end("Controller not found for playerId  : " + playerId);
-            logger.info("Controller not found for playerId  : " + playerId);
+            logger.info("ControllerGruppe24 not found for playerId  : " + playerId);
             return;
         }
 

@@ -31,22 +31,18 @@ public class GameStateManager {
     private final List<String> readyPlayers = Collections.synchronizedList(new ArrayList<>());
     private final  Map<String, PlayerInfo> playerScoreData = new ConcurrentHashMap<>();
 
-    private GameModel gameModel;
     private static GameStateManager instance;
     private final EventBus eventBus;
     private final Vertx vertx;
+
     private GameStateManager(Vertx vertx) {
         this.eventBus = vertx.eventBus();
         this.vertx = vertx;
     }
 
-    public GameModel getGameModel() {
-        return gameModel;
-    }
 
-    public void setGameModel(GameModel gameModel) {
-        this.gameModel = gameModel;
-    }
+
+
     public static synchronized GameStateManager getInstance(Vertx vertx) {
         if (instance == null) {
             instance = new GameStateManager(vertx);
@@ -54,6 +50,7 @@ public class GameStateManager {
         return instance;
     }
     public  Vertx getVertx() {
+
         return vertx;
     }
     public Map<String, PlayerInfo> getPlayerInfos() {
@@ -79,11 +76,12 @@ public Map<String, PlayerInfo> getPlayerScoreData() {
         playerScoreData.put(playerId, playerInfo);
     }
 
-    void setCurrentSequence(int color) {
-        //currentSequence.clear();
+   public void setCurrentSequence(int color) {
+
         currentSequence.add(color);
     }
-    List<Integer>getCurrentSequence() {
+   public List<Integer>getCurrentSequence() {
+
         return this.currentSequence;
     }
 
@@ -93,29 +91,20 @@ public Map<String, PlayerInfo> getPlayerScoreData() {
                 .toList();
     }
 
-    void removePlayer(String name) {
-        activePlayers.remove(name);
-    }
     void resetCurrentSequence() {
+
         this.currentSequence.clear();
     }
    public EventBus getEventBus() {
+
         return eventBus;
     }
 
-    List<String> getActivePlayers() {
-        return activePlayers;
-    }
 
     /**
      * Controller-Management
      */
-    public void registerController(String controllerId) {
-        if (controllerId != null && !controllerId.isBlank() && !activeControllers.contains(controllerId)) {
-            activeControllers.add(controllerId);
-            logger.debug("Controller registered: {}", controllerId);
-        }
-    }
+
 
     public  void removeActiveControllers(String controllerId) {
         if (activeControllers.contains(controllerId)) {
@@ -138,6 +127,7 @@ public Map<String, PlayerInfo> getPlayerScoreData() {
     }
 
     public void removePlayerToController(String playerId) {
+
         playerToController.remove(playerId);
     }
 
@@ -157,6 +147,7 @@ public Map<String, PlayerInfo> getPlayerScoreData() {
     }
 
     public String getControllerIdForPlayer(String playerId) {
+
         return playerToController.getOrDefault(playerId, null);
     }
 
@@ -236,9 +227,15 @@ public Map<String, PlayerInfo> getPlayerScoreData() {
         return readyControllers;
      }
 
+
     public List<String>getControllerIdFromJsonBody(JsonArray jsonArray) {
         return jsonArray.stream().map(Object::toString).collect(Collectors.toList());
     }
+
+
+    /**
+     *   entfernt eines Players aus der List von readyPlayer
+     */
     public void removeToReadyPlayer(String playerId) {
         synchronized (readyPlayers) {
             readyPlayers.remove(playerId);
@@ -246,6 +243,11 @@ public Map<String, PlayerInfo> getPlayerScoreData() {
             logger.info("Player {}  remove To ReadyList Successfully", playerId);
         }
     }
+
+
+    /**
+     *   verteilt die TimeInput je nach  SequenceLength
+     */
     public int calculateInputTimeLimit(int sequenceLength) {
         double timePerColor;
         if (sequenceLength <= 1) {
@@ -260,17 +262,20 @@ public Map<String, PlayerInfo> getPlayerScoreData() {
 
         return (int) (sequenceLength * timePerColor * 1000);
     }
+
+    /**
+     *  Zur Berechnung der Punkte  für Ein Spieler
+     */
     public int calculateScore(int round, long reactionTimeMillis) {
         final int maxReactionTime = 3000;
 
-        // Wenn zu langsam, 0 Punkte
         if (reactionTimeMillis > maxReactionTime) return 0;
 
         // Punkte = Rundenfaktor * Zeitbonus
         int baseScore = round * 10;
 
         // Zeitbonus (je schneller, desto besser)
-        double timeFactor = (maxReactionTime - reactionTimeMillis) / (double) maxReactionTime; // 0..1
+        double timeFactor = (maxReactionTime - reactionTimeMillis) / (double) maxReactionTime;
 
         // Gesamtpunktzahl
         return (int)(baseScore * timeFactor);

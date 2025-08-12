@@ -32,8 +32,8 @@
       }
       .lcd-display {
         margin: 0 auto 30px auto;
-        width: 350px;
-        height: 125px;
+        width: 390px;
+        height: 150px;
         background: #181818;
         border-radius: 10px;
         padding: 16px 0;
@@ -98,11 +98,41 @@
         .joystick-center { left: 33vw; top: 33vw;}
         .lcd-display { width: 90vw; font-size: 1.1rem;}
       }
+
+      #logout {
+        position: fixed; /* oder absolute */
+        top: 15px;
+        right: 15px;
+        padding: 8px 16px;
+        font-size: 1rem;
+        border: none;
+        background: #e74c3c;
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        transition: background-color 0.3s;
+        z-index: 1000; /* damit es immer oben ist */
+      }
+      #logout:hover {
+        background: #c0392b;
+      }
+      @media (max-width: 600px) {
+        #logout {
+          top: 10px;
+          right: 10px;
+          font-size: 0.9rem;
+          padding: 6px 12px;
+        }
+      }
+
     </style>
   </head>
   <body>
+  <button id="logout">Logout</button>
     <h1>Webcontroller <small id="controllerId">(id)</small></h1>
     <div class="lcd-display">
+      <div class="lcd-line"></div>
       <div class="lcd-line"></div>
       <div class="lcd-line"></div>
       <div class="lcd-line"></div>
@@ -114,6 +144,7 @@
       <button class="color-button yellow"  data-color="yellow" data-tone="392"></button>
       <button class="color-button blue"    data-color="blue"   data-tone="195"></button>
       <div class="joystick-center">●</div>
+
     </div>
     <script>
       // Controller-ID aus URL übernehmen und anzeigen

@@ -104,4 +104,17 @@ public class MqttService {
 
 
     }
+    public  void publishPlayerData(JsonObject json) {
+        String controllerId = json.getString("controllerId");
+        json.remove("controllerId");
+        mqttClient.publish(mqttMessagePrefix +"simon/game/"+ controllerId +"/playerData", json.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
+        logger.info("📡 MQTT published  playerName  successful: {}",  json);
+    }
+
+    public  void publishPlayerElimination(JsonObject json) {
+        String controllerId = json.getString("controllerId");
+        json.remove("controllerId");
+        mqttClient.publish(mqttMessagePrefix +"simon/game/"+ controllerId +"/playerElimination", json.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
+        logger.info("📡 MQTT published  playerElimination  successful: {}",  json);
+    }
 }

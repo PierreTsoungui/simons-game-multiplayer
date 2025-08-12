@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS game
 (
     gameId  VARCHAR(50)  PRIMARY KEY ,
     isGameActive BOOLEAN DEFAULT  FALSE,
-    startTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    startTime TIME DEFAULT  CURRENT_TIME,
     endTime DATETIME DEFAULT NULL
 );
 
@@ -38,12 +38,3 @@ CREATE TABLE IF NOT EXISTS  highScore
 );
 
 
- SELECT * from game_lock
-
-
- DROP table  highScore
-
-select *
-from game_lock
-
-select * FROM  highScore

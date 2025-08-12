@@ -108,7 +108,17 @@ public class MqttController {
             JsonObject playerData = (JsonObject) msg.body();
             mqttService.publishPlayerProgress(playerData);
         });
+        this.eventBus.consumer("group-24.simon.game.players.loggedIn", msg -> {
+            logger.info("Message received via EventBus: 'group-24.simon.game.players.loggedIn'");
+            JsonObject playerData = (JsonObject) msg.body();
+            mqttService.publishPlayerData( playerData);
+        });
 
+        this.eventBus.consumer("group-24.simon.game.players.eliminated", msg -> {
+            logger.info("Message received via EventBus: 'group-24.simon.game.players.eliminated'");
+            JsonObject playerData = (JsonObject) msg.body();
+            mqttService.publishPlayerElimination( playerData);
+        });
 
     }
 

@@ -128,6 +128,7 @@
         <th>Player status</th>
         <th>Game Round</th>
         <th>Total Move Time</th>
+        <th>score</th>
     </tr>
     </thead>
     <tbody id="lobbyTableBody">
@@ -247,6 +248,10 @@
           timeCell.textContent = player.totalMoveTime;
           row.appendChild(timeCell);
 
+         const scoreCell = document.createElement('td');
+         scoreCell.textContent = player.score;
+         row.appendChild(scoreCell);
+
           tbody.appendChild(row);
       });
 
@@ -289,7 +294,7 @@
             }
             if(topic===mqttMessagePrefix + 'simon/game/events/players/progress') {
                 console.log(`📥 Message received [${topic}]:`, msg);
-                const {controllerId, round, status, totalMoveTime} = msg
+                const {controllerId, round, status, totalMoveTime, score} = msg
 
                 const rows = document.querySelectorAll("#lobbyTableBody tr")
                 rows.forEach(row => {
@@ -301,6 +306,8 @@
                         roundCell.textContent=round;
                         const moveTimeCell= row.children[4]
                         moveTimeCell.textContent= totalMoveTime;
+                        const scoreCell= row.children[5];
+                        scoreCell.textContent= score
                     }
                 });
             }

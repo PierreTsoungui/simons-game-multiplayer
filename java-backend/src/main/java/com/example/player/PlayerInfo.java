@@ -24,20 +24,6 @@ public class PlayerInfo {
     }
 
 
-    // --- Getter und Setter ---
-
-    public String getControllerId() {
-        return controllerId;
-    }
-
-    public void setControllerId(String controllerId) {
-        this.controllerId = controllerId;
-    }
-
-    public void setGameRound(int gameRound) {
-        this.gameRound = gameRound;
-    }
-
     public boolean isReady() {
         return ready;
     }
@@ -47,13 +33,6 @@ public class PlayerInfo {
         this.ready = status;
     }
 
-    public long getTotalMoveTime() {
-        return totalMoveTime;
-    }
-
-    public void setTotalMoveTime(long totalMoveTime) {
-        this.totalMoveTime = totalMoveTime;
-    }
 
     // Time incrementation
     public void addMoveTime(long moveTime) {
@@ -84,6 +63,7 @@ public class PlayerInfo {
                             .put("controllerId", infos.controllerId)
                             .put("status", infos.ready)
                             .put("round", infos.gameRound)
+                            .put("score", infos.score)
                             .put("totalMoveTime", infos.formatMillis(infos.totalMoveTime));
 
                     return json;
@@ -104,6 +84,7 @@ public class PlayerInfo {
         json.put("gameRound", playerInfo.gameRound);
         json.put("ready", playerInfo.ready);
         json.put("totalMoveTime", playerInfo.totalMoveTime);
+        json.put("score", playerInfo.score);
 
         return json;
 

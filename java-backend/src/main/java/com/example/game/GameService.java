@@ -23,16 +23,17 @@ import java.util.*;
 
 
 public class GameService {
+
     private static final Logger logger = LoggerFactory.getLogger(ObjectController.class);
     GameStateManager gsm;
     public static  volatile GameModel gameModel;
     private static GameService instance;
     private final JDBCPool jdbcPool;
+
     public GameService(Vertx vertx) {
         this.gsm=GameStateManager.getInstance(vertx);
         this.jdbcPool = DatabaseClient.getInstance();
     }
-
 
 
 
@@ -59,6 +60,11 @@ public class GameService {
                     });
     }
 
+    /**
+     *
+     *   wird verwenden ,um ein Spiel Zu Starten
+     */
+
     public void startGame(Handler<AsyncResult<Void>> resultHandler) {
         String gameCode = UUID.randomUUID().toString();
 
@@ -67,9 +73,9 @@ public class GameService {
                 resultHandler.handle(Future.failedFuture(lockResult.cause()));
                 return;
             }
-
-            if (gsm.getReadyPlayers().isEmpty()) {
-                releaseGameLock(); // nicht vergessen!
+            //  Mindestens 2 Spielers als Ready markiert
+            if (gsm.getReadyPlayers().isEmpty() || gsm.getReadyPlayers().size() == 1) {
+                releaseGameLock();
                 resultHandler.handle(Future.failedFuture("No players are ready to start the game."));
                 return;
             }
@@ -77,8 +83,6 @@ public class GameService {
             createGameInDB(gameCode, dbAr -> {
                 if (dbAr.succeeded()) {
                     gameModel=  new GameModel(gsm.getReadyPlayers(), gameCode);
-                    //gsm.setGameModel(gameModel);
-                   //this.gameModel = new GameModel(gsm.getReadyPlayers(), gameCode);
                     gsm.setCurrentSequence(gameModel.nextColors());
 
                     List<String> controllerIds = gsm.getReadyControllerForPlayer(gameModel.players);
@@ -144,47 +148,6 @@ public class GameService {
     }
 
 
-    public  void checkAndHandleActiveGames(Handler<AsyncResult<Void>> resultHandler) {
-            String query = "SELECT gameId FROM game WHERE isGameActive = ?";
-            jdbcPool.preparedQuery(query)
-                    .execute(Tuple.of(true), ar -> {
-                        if (ar.succeeded()) {
-                            RowSet<Row> rows = ar.result();
-                            if (rows.rowCount() > 0) {
-                                logger.info("hier komme ich " + rows.rowCount());
-                                endActiveGames( endAr -> {
-                                    if (endAr.succeeded()) {
-                                        logger.info("All active games terminated on startup.");
-                                        resultHandler.handle(Future.succeededFuture());
-                                    } else {
-                                        logger.error("Failed to terminate active games: {}", endAr.cause().getMessage());
-                                        resultHandler.handle(Future.failedFuture(endAr.cause()));
-                                    }
-                                });
-
-                            } else {
-                                logger.info("No active games found on startup.");
-                                resultHandler.handle(Future.succeededFuture());
-                            }
-                        } else {
-                            logger.error("Failed to check active games: {}", ar.cause().getMessage());
-                            resultHandler.handle(Future.failedFuture(ar.cause()));
-                        }
-                    });
-        }
-
-    private void endActiveGames( Handler<AsyncResult<Void>> resultHandler) {
-        String query = "UPDATE game SET isGameActive = ?, endTime = ? WHERE isGameActive = ?";
-        jdbcPool.preparedQuery(query)
-                .execute(Tuple.of(false, java.time.LocalTime.now(), true), ar -> {
-                    if (ar.succeeded()) {
-                        resultHandler.handle(Future.succeededFuture());
-                    } else {
-                        resultHandler.handle(Future.failedFuture(ar.cause()));
-                    }
-                });
-    }
-
     private void endGameindb(String gameCode,Handler<AsyncResult<Void>> resultHandler) {
         String query = "UPDATE game SET isGameActive = ?, endTime = ? WHERE gameId= ?";
         jdbcPool.preparedQuery(query)
@@ -210,8 +173,6 @@ public class GameService {
 
         PlayerInfo playerInfo= gsm.getPlayerInfos().get(playerId);
         if (isCorrectInput) {
-            int  score = gsm.calculateScore(gameModel.currentRound, time);
-            //addPlayerScore(playerId, score);
             gameModel.getIsCorrect().put(playerId, true);
             playerInfo.updateRound(gameModel.currentRound);
             logger.info("Player's Time{}",playerInfo.totalMoveTime);
@@ -272,13 +233,18 @@ public class GameService {
     public void updatePlayerData(PlayerInfo playerInfo, boolean status, boolean isEliminiert) {
         playerInfo.setReady(status);
 
-        //String playerId=gsm.playerIdFromControllerId(playerInfo.controllerId);
         JsonObject json = new JsonObject();
                         json
                         .put("controllerId", playerInfo.controllerId)
                         .put("round", playerInfo.gameRound).put("status",  status)
-                        .put("totalMoveTime", playerInfo.formatMillis(playerInfo.totalMoveTime));
+                        .put("totalMoveTime", playerInfo.formatMillis(playerInfo.totalMoveTime)).put("score", playerInfo.score);
+
+
                 gsm.getEventBus().publish("group-24.simon.game.players.progress", json);
+
+                if (isEliminiert) {
+                    gsm.getEventBus().publish("group-24.simon.game.players.eliminated", json);
+                }
 
     }
 
@@ -290,16 +256,6 @@ public class GameService {
         json.put("result", isCorrect ? "correct" : "wrong");
         gsm.getEventBus().publish("group-24.simon.game.players.feedback", json);
 
-    }
-    public void addPlayerScore(String playerId, int score) {
-
-        logger.info("Add player's score for  Game  "  + gameModel);
-        if(!gameModel.playerScores.containsKey(playerId)){
-            gameModel.playerScores.put(playerId, score);
-
-        }else{
-            gameModel.playerScores.merge(playerId, score, Integer::sum);
-        }
     }
 
 
@@ -320,23 +276,6 @@ public class GameService {
     }
 
 
-
-    /*private void insertHighScore(String gameCode, int playerId, int score) {
-        String query = """
-        INSERT INTO highScore (gameId, playerId, bestScore)
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE bestScore = GREATEST(bestScore, VALUES(bestScore))
-        """;
-
-        jdbcPool.preparedQuery(query)
-                .execute(Tuple.of(gameCode, playerId, score), ar -> {
-                    if (ar.succeeded()) {
-                        logger.info("Highscore updated for player " + playerId + " in game " + gameCode);
-                    } else {
-                        logger.error("Failed to update high_score", ar.cause());
-                    }
-                });
-    }*/
    private void insertHighScore(int playerId, int score, String time) {
        logger.info("raw duration millis = {}", time);
 

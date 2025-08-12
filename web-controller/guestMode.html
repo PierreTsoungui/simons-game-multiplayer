@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simon Game Guest Mode</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script src="env.js"></script>
+  <script src="guestMode.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      /* Optional: */
+      background-color: #444242;
+      color: rgb(10, 189, 10);
+      font-family: monospace;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      padding: 10px;
+    }
+    .section {
+      flex: 1 1 400px;
+      margin: 10px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 20px #0002;
+      padding: 15px;
+    }
+
+    /* Waiting area styles (from your code) */
+    h1 {
+      text-align: center;
+      margin: 0.5rem 0;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: #fff;
+    }
+    th, td {
+      border: 1px solid #bbb;
+      padding: 0.7rem 1.2rem;
+      text-align: center;
+    }
+    th { background: #4CAF50; color: #fff; }
+    tr:nth-child(even) { background: #f2f2f2; }
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .button-group button {
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      color: white;
+    }
+    #startGame { background-color: #032963; }
+    #highscore { background-color: #2196f3; }
+    #logout { background-color: #f44336; }
+
+    /* Controller styles – scaled down */
+    .controller-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .controller-title {
+      color: #333;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .lcd-display {
+      width: 220px;
+      height: 80px;
+      background: #181818;
+      border-radius: 8px;
+      padding: 8px 0;
+      color: #0f0;
+      font-family: monospace;
+      font-size: 1rem;
+      box-shadow: 0 0 12px #0008;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .lcd-line { height: 1.2em; }
+    .joystick-container {
+      position: relative;
+      width: 250px;
+      height: 250px;
+    }
+    .color-button {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: none;
+      opacity: 0.98;
+      box-shadow: 0 0 10px #0007;
+    }
+    .color-button.green   { background: #2ecc71; top: 0; left: 80px; }
+    .color-button.red     { background: #e74c3c; right: 0; top: 80px; }
+    .color-button.yellow  { background: #f1c40f; left: 0; top: 80px; }
+    .color-button.blue    { background: #3498db; bottom: 0; left: 80px; }
+    .color-button.active  { filter: brightness(1.25) drop-shadow(0 0 12px #fff8); }
+    .joystick-center {
+      position: absolute;
+      left: 80px; top: 80px;
+      width: 90px; height: 90px;
+      background: #222;
+      border-radius: 50%;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: bold;
+      box-shadow: 0 0 15px #000b;
+      border: 3px solid #444;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Waiting Area Section -->
+  <div class="section">
+    <h1>Waiting Area - Simon's Game Lobby</h1>
+    <table>
+      <thead>
+      <tr>
+        <th>Player Name</th>
+        <th>ControllerID</th>
+        <th>Player status</th>
+        <th>Game Round</th>
+        <th>Total Move Time</th>
+        <th>scores</th>
+      </tr>
+      </thead>
+      <tbody id="lobbyTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Guest Mode Controller Section -->
+  <div class="section controller-wrapper">
+    <div class="controller-title">Guest Mode – Watching the Game</div>
+    <div class="lcd-display">
+      <div class="lcd-line"></div>
+      <div class="lcd-line"></div>
+      <div class="lcd-line"></div>
+      <div class="lcd-line"></div>
+    </div>
+    <div class="joystick-container">
+      <button class="color-button green" data-color="green"></button>
+      <button class="color-button red" data-color="red"></button>
+      <button class="color-button yellow" data-color="yellow"></button>
+      <button class="color-button blue" data-color="blue"></button>
+      <div class="joystick-center">●</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
