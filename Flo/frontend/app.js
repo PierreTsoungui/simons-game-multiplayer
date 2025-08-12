@@ -1,12 +1,3 @@
-document
-  .getElementById("open-webcontroller")
-  .addEventListener("click", function () {
-    window.open(
-      "./controller/controller.html",
-      "Webcontroller",
-      "resizable,height=600,width=550"
-    );
-  });
 
 document
   .getElementById("create-form")

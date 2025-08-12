@@ -104,6 +104,15 @@
     </style>
 </head>
 <body>
+<div id="userMenu" style="position: absolute; top: 20px; right: 30px;">
+    <button id="userMenuButton">👤 Username ▼</button>
+    <div id="userMenuDropdown" style="display:none; position:absolute; right:0; background:#fff; box-shadow:0 2px 8px #0002; border-radius:6px; min-width:180px; z-index:100;">
+        <div style="padding:1em;">
+            <strong id="menuPlayerName">Username</strong><br>
+        </div>
+        <button id="editProfileBtn" style="width:100%;">Edit Profile</button>
+    </div>
+</div>
 <h1><center>Waiting Area - Simon's Game Lobby</center></h1>
 <div class="simon-logo">
     <div class="simon-quarter green"></div>
@@ -132,7 +141,6 @@
 </div>
 </body>
 <script>
-
     let isLoading= true;
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -141,7 +149,7 @@
     });
 
     function fetchWaitingAreaData() {
-        fetch('http://localhost:8080/api/waitingArea') // dein Endpoint im Backend
+        fetch('http://localhost:8080/api/waitingArea')
             .then(response => {
                 if (!response.ok) console.log("Fehler beim Abrufen der Daten");
                 return response.json();
@@ -169,15 +177,33 @@
         if(response.ok){
             // Redirect to the controller page after starting the game
             setTimeout(() => {
-                window.location.href = "controller.html";
+              //  window.location.href = "controller.html";
             }, 500);
         }else{
             alert("Failed to start the game!");
         }
     });
     document.getElementById('logout').addEventListener('click', function() {
-        localStorage.clear(); // Clear local storage
-        window.location.href = "loginPage.html";
+         const playerId= localStorage.getItem("playerId")
+        if (!playerId) {
+            alert("Kein Spieler angemeldet.");
+            return;
+        }
+
+        fetch(`http://localhost:8080/api/players/logout?id=${playerId}`)
+            .then(response => {
+                if (response.ok) {
+                    localStorage.clear();
+                    window.location.href = "loginPage.html";
+                } else {
+                    alert("Log out unsuccessful!");
+                }
+            })
+            .catch(error => {
+                console.error("Netzwerkfehler beim Logout:", error);
+            });
+
+
     });
     document.getElementById('highscore').addEventListener('click', function(){
         window.location.href = "highscore.html";
@@ -261,9 +287,126 @@
                 }
                 updateWaitingArea(msg.waitingAreaData);
             }
+            if(topic===mqttMessagePrefix + 'simon/game/events/players/progress') {
+                console.log(`📥 Message received [${topic}]:`, msg);
+                const {controllerId, round, status, totalMoveTime} = msg
+
+                const rows = document.querySelectorAll("#lobbyTableBody tr")
+                rows.forEach(row => {
+                    const controllerCell = row.children[1];
+                    if (controllerCell.textContent === controllerId) {
+                        const statusCell = row.children[2];
+                        statusCell.textContent = status ? "ready" : "not ready"
+                        const roundCell= row.children[3]
+                        roundCell.textContent=round;
+                        const moveTimeCell= row.children[4]
+                        moveTimeCell.textContent= totalMoveTime;
+                    }
+                });
+            }
+            if(topic===mqttMessagePrefix+ "simon/game/events/waitingAreaUpdated"){
+
+                const {waitingAreaData} = msg
+                updateWaitingArea(waitingAreaData, true);
+            }
         })
 
+    //Handle user's menu
+    const userMenuButton = document.getElementById('userMenuButton');
+    const userMenuDropdown = document.getElementById('userMenuDropdown');
+    const menuPlayerName = document.getElementById('menuPlayerName');
+    const editProfileBtn = document.getElementById('editProfileBtn');
+
+    //We do load the player's name from the local storage here
+    const playerName = localStorage.getItem("playerName") || 'Username';
+    console.log(playerName);
+    userMenuButton.textContent = `👤 ${playerName} ▼`;
+    menuPlayerName.textContent = playerName;
+
+    //We handle drop down here
+    userMenuButton.addEventListener('click', function(e) {
+        e.stopPropagation();// Prevent click from propagating to the document
+
+        userMenuDropdown.style.display = userMenuDropdown.style.display === 'block' ? 'none' : 'block';// handle dropdown visibility
+    });
 
 
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function() {
+        userMenuDropdown.style.display = 'none';
+    });
+
+    // Edit profile button
+    editProfileBtn.addEventListener('click', function(e) {
+        e.stopPropagation(); // Prevent click from propagating to the document
+        const oldModal = document.getElementById('editProfileModal');
+        if(oldModal) oldModal.remove(); // Remove old modal if it exists
+
+
+        // Modal HTML with password fields
+        const modalHtml = `
+        <div id="editProfileModal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0006;display:flex;align-items:center;justify-content:center;z-index:200;">
+            <div style="background:#fff;padding:2em 2em 1em 2em;border-radius:10px;min-width:300px;box-shadow:0 4px 32px #0004;position:relative;">
+            <h2>Edit Profile</h2>
+            <form id="profileForm">
+                <label for="editPassword">New Password:</label><br>
+                <input type="password" id="editPassword" name="editPassword" placeholder="Leave blank to keep current" style="width:100%;padding:0.5em;margin-bottom:1em;" required><br>
+                <label for="editPasswordConfirm">Confirm New Password:</label><br>
+                <input type="password" id="editPasswordConfirm" name="editPasswordConfirm" placeholder="Repeat new password" style="width:100%;padding:0.5em;margin-bottom:1em;" required><br>
+                <button type="submit" style="padding:0.5em 2em;">Save</button>
+                <button type="button" id="closeProfileModal" style="padding:0.5em 2em;margin-left:1em;">Cancel</button>
+            </form>
+            </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Handle form submission
+        document.getElementById('profileForm').addEventListener('submit', async function(ev){
+            ev.preventDefault();// Prevent default form submission
+            const newPassword = document.getElementById('editPassword').value;
+            const confirmPassword = document.getElementById('editPasswordConfirm').value;
+
+            if(newPassword || confirmPassword){
+                if(newPassword !== confirmPassword){
+                    alert("Passwords do not match!");
+                    return;
+                }
+                if(newPassword.length < 4){
+                    alert("Password must contain at least 4 characters!");
+                    return;
+                }
+            }
+            const playerId = localStorage.getItem('playerId');
+            if(!playerId){
+                alert("No player is logged in!");
+            }
+
+            //Building the different payloads for the transactions
+            const payload = {id: playerId, password: newPassword};
+
+            try{
+                const response = await fetch('http://localhost:8080/api/players/updateProfile', {
+                    method: 'PATCH',// Use PATCH for partial modification
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if(response.ok){
+                    document.getElementById('editProfileModal').remove(); // Close modal
+                    alert("Password updated successfully!");
+                }else{
+                    const result = await response.json();
+                    alert(result.error || "Failed to update profile!");
+                }
+            }catch(er){
+                alert("Network error while updating profile...");
+                console.error(er);
+            }
+        });
+        // Close modal button
+        document.getElementById('closeProfileModal').addEventListener('click', function() {
+            document.getElementById('editProfileModal').remove(); // Remove modal
+        });
+    });
 </script>
 </html>

@@ -4,60 +4,72 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GameModel {
-    // Farbkonstanten hinzufügen
-    public static final Map<Integer, String> COLOR_MAP = Map.of(
-            0, "RED",
-            1, "GREEN",
-            2, "BLUE",
-            3, "YELLOW"
-    );
-        int currentRound;
-        boolean isGameActive;
-        List<Integer> colorSequence;
-        List<String> players;
-        Map<String, String> playerTocontroller;
-        Map<String, Integer> playerScores;
-        Map<String, Double> playerPerformance;
-        long startTime;
-    public GameModel(List<String>players) {
+
+    private final Map<String, Boolean> playerInputs = new ConcurrentHashMap<>();
+    private final Map<String, Boolean> isCorrect = new ConcurrentHashMap<>();
+    private final Map<String, Boolean> hasSubmitted = new ConcurrentHashMap<>();
+    String gameCode;
+    int currentRound;
+    boolean isGameActive;
+    List<String> players;
+    Map<String, Integer> playerScores= new ConcurrentHashMap<>();
+
+    public GameModel(List<String>players, String gameCode) {
+        this.gameCode = gameCode;
         currentRound=0;
         isGameActive= true;
-        colorSequence = new ArrayList<>();
-        playerTocontroller= new HashMap<>();
         this.players =players;
-        startTime = System.currentTimeMillis();
-
     }
 
-
-void  addColorToSequence() {
+int nextColors() {
     int color = (int) (Math.random() * 4);
-    colorSequence.add(color);
     currentRound++;
+    return color;
 }
 
-boolean checkPlayerInput( String playerId,List<Integer> playerInput) {
+public Map<String, Boolean> getIsCorrect() {
+        return isCorrect;
+}
 
-        boolean isCorrectInput = colorSequence.equals(playerInput);
-
-        if (isCorrectInput) {
-             Double inputTime= (System.currentTimeMillis() - startTime) / 1000.0;
-             playerPerformance.put(playerId,playerPerformance.getOrDefault(playerId,0.0)+inputTime);
-
-        }
-         return isCorrectInput;
-
-    }
-
-    public void endGame() {
+public void endGame() {
         this.isGameActive = false;
     }
 
-    public List<String> getColorSequenceAsNames() {
-        return colorSequence.stream()
-                .map(COLOR_MAP::get)
-                .toList();
+    public void registerPlayerInput(String playerId, boolean correct) {
+        hasSubmitted.put(playerId, true);
+        isCorrect.put(playerId, correct);
     }
+
+    public boolean allPlayersSubmitted() {
+        for (String player : players) {
+            if (!hasSubmitted.getOrDefault(player, false)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public List<String> getQualifiedPlayers() {
+        List<String> qualified = new ArrayList<>();
+        for (String player : players) {
+            if (isCorrect.getOrDefault(player, false)) {
+                qualified.add(player);
+            }
+        }
+        return qualified;
+    }
+    public void eliminateUnqualifiedPlayers() {
+        List<String> qualified = getQualifiedPlayers();
+        players.clear();
+        players.addAll(qualified);
+    }
+
+    public void resetForNextRound() {
+        hasSubmitted.clear();
+        isCorrect.clear();
+    }
+
 }

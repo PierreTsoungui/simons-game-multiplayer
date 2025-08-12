@@ -1,0 +1,37 @@
+### RegisterTest
+
+POST http://localhost:8080/api/players/register
+Content-Type: application/json
+
+{
+  "userName": "Dans",
+  "password": "1234"
+}
+
+
+
+### LoginTEST
+POST http://localhost:8080/api/players/login
+Content-Type: application/json
+
+{
+  "playerName": "Thomas",
+  "password": "1234",
+  "controllerId": "web-vrstah"
+
+}
+
+### waitingAreaTest
+GET  http://localhost:8080/api/waitingArea
+
+
+### LogoutTest
+
+GET  http://localhost:8080/api/players/logout?id=1
+
+### StartGameTest
+POST http://localhost:8080/api/game/start
+
+
+### HighScoreTest
+GET http://localhost:8080/api/highscores

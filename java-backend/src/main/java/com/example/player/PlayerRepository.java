@@ -96,9 +96,9 @@ public class PlayerRepository {
                         return;
                     }
 
-                    boolean added = gsm.addPlayerToController(String.valueOf(playerId), controllerId);
+                    boolean added = gsm.addPlayerToController(String.valueOf(playerId), controllerId, playerName);
                     if (!added) {
-                        resultHandler.handle(Future.failedFuture("Unavailable controller!"));
+                        resultHandler.handle(Future.failedFuture("Unavailable controller or player already connect  with another controller!"));
                         return;
                     }
 
@@ -106,6 +106,22 @@ public class PlayerRepository {
                     resultHandler.handle(Future.succeededFuture(rows));
                 });
     }
+
+
+    void profileUpdate(int playerId, String password, Handler<AsyncResult<Void>> resultHandler) {
+        String query = "UPDATE players SET password_hash = ? WHERE playerId = ?";
+        Tuple params = Tuple.of(password, playerId);
+
+        jdbcPool.preparedQuery(query)
+                .execute(params, ar -> {
+                    if(ar.succeeded()) {
+                        resultHandler.handle(Future.succeededFuture());
+                    }else{
+                        resultHandler.handle(Future.failedFuture(ar.cause()));
+                    }
+                });
+    }
+
 
 
 }

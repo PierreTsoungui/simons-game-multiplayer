@@ -13,29 +13,37 @@ CREATE TABLE IF NOT EXISTS  players
 
 
 );
-
-CREATE TABLE IF NOT EXISTS gameData (
-                                        gameId INT UNSIGNED,
-                                        roundNr INT UNSIGNED,
-                                        playerId INT UNSIGNED,
-                                        score INT UNSIGNED DEFAULT 0,
-                                        duration TIME,
-                                        PRIMARY KEY (gameId, roundNr, playerId),
-                                        FOREIGN KEY (playerId) REFERENCES players(playerId) ON DELETE CASCADE
+CREATE TABLE game_lock (
+                           id INT PRIMARY KEY,
+                           is_locked BOOLEAN NOT NULL
+);
+CREATE TABLE IF NOT EXISTS game
+(
+    gameId  VARCHAR(50)  PRIMARY KEY ,
+    isGameActive BOOLEAN DEFAULT  FALSE,
+    startTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    endTime DATETIME DEFAULT NULL
 );
 
+INSERT INTO game_lock (id, is_locked) VALUES (1, FALSE);
 
 CREATE TABLE IF NOT EXISTS  highScore
 (
-    gameId    INT,
-    bestScore INT DEFAULT 0,
+    gameId  VARCHAR(50) ,
+    score INT DEFAULT 0,
     playerId  INT UNSIGNED,
-    FOREIGN KEY (gameId) REFERENCES gameData(gameId),
+    duration TIME,
     FOREIGN KEY (playerId) REFERENCES players(playerId) ON DELETE CASCADE,
     PRIMARY KEY (gameId, playerId)
-
 );
 
 
-select * from players
+ SELECT * from game_lock
 
+
+ DROP table  highScore
+
+select *
+from game_lock
+
+select * FROM  highScore

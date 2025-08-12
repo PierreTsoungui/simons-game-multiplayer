@@ -6,7 +6,7 @@ function connectMQTT() {
   const password = document.getElementById('mqtt-password').value;
 
   const options = {};
-  
+
   if (username) options.username = username;
   if (password) options.password = password;
 

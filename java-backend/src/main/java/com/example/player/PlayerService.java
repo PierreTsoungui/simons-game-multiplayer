@@ -6,6 +6,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.PreparedStatement;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.core.Handler;
@@ -33,5 +34,13 @@ public class PlayerService {
     }
 
 
+    void updatePassword(int playerIdInt, String newPassword, Handler<AsyncResult<Void>> resultHandler) {
+
+        String hashPassword = newPassword != null && !newPassword.isEmpty() ? BCrypt.hashpw(newPassword, BCrypt.gensalt()) : null;
+
+        playerRepository.profileUpdate(playerIdInt, hashPassword, resultHandler);
+    }
 
 }
+
+

@@ -9,12 +9,13 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
-
+#include <cstring>
+#include <string.h>
+#include <ArduinoJson.h>
 #include "Adafruit_SH1106.hpp"
 
 #include <Adafruit_NeoPixel.h>
 #include <Fonts/FreeSans9pt7b.h>
-#include <SPI.h>
 #include <MFRC522.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -136,7 +137,7 @@ String rfid = "";
 // MAC Address
 uint8_t baseMac[6];
 
-char *text_colors[] = {"RED", "YELLOW", "GREEN", "BLUE", "ALL_WHITE", "NO_COLOR"};
+const char *text_colors[] = {"RED", "YELLOW", "GREEN", "BLUE", "ALL_WHITE", "NO_COLOR"};
 
 // WiFi
 const char *ssid = "testwlan";     // Enter your WiFi name
@@ -144,10 +145,13 @@ const char *password = "test1234"; // Enter WiFi password
 
 // MQTT Broker
 const char *mqtt_broker = "broker.emqx.io";
-const char *topic = "emqx/esp32";
+//const char *topic = "emqx/esp32";
 const char *mqtt_username = "emqx";
 const char *mqtt_password = "public";
 const int mqtt_port = 1883;
+//topic
+const char* topic = "simon/game/#";
+
 
 // PubSubClient
 WiFiClient espClient;
@@ -159,7 +163,7 @@ void init_oled();
 void init_gpios();
 void init_game_data();
 void print_game_data();
-void show_color_sequence();
+void show_color_sequence(const char *color);
 void add_new_color_to_sequence();
 void print_game_data_serial();
 void show_animation_correct();
@@ -168,8 +172,10 @@ void show_animation_wrong();
 void show_thm_logo_oled(void);
 void show_boot_sequence();
 void check_and_set_best_score();
-
+void callBack(char *topic, byte* payload, unsigned int length);
+void colorsTest();
 void setup()
+
 {
   Serial.begin(9600);
   while (!Serial)
@@ -181,6 +187,8 @@ void setup()
 
   /*WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
+
+
   {
     delay(500);
     Serial.println("Connecting to WiFi..");
@@ -193,10 +201,13 @@ void setup()
   show_boot_sequence();
 
   show_thm_logo_oled();
+  //colorsTest();
 }
 
 void loop()
 {
+
+
 }
 
 void show_boot_sequence()
@@ -274,4 +285,52 @@ void show_thm_logo_oled(void)
       (display.height() - LOGO_HEIGHT) / 2,
       thm_logo, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
+}
+
+void callBack(char* topic, byte* payload, unsigned int length) {
+    char json[length + 1];
+    memcpy(json, payload, length);
+    json[length] = '\0';
+
+    DynamicJsonDocument doc(256);
+    deserializeJson(doc, json);
+
+    JsonArray sequence = doc["sequence"];
+
+    for (JsonVariant v : sequence) {
+        const char* color = v.as<const char*>();
+        show_color_sequence(color); // Funktion außerhalb definiert
+    }
+}
+void show_color_sequence(const char* color){
+    uint8_t max_brightness = 20;
+    strip.setBrightness(max_brightness);  // war vorher 'brightness'
+
+    if (strcmp(color, "RED") == 0) {
+        strip.setPixelColor(0, strip.Color(255, 0, 0));
+    } else if (strcmp(color, "GREEN") == 0) {
+        strip.setPixelColor(0, strip.Color(0, 255, 0));
+    } else if (strcmp(color, "BLUE") == 0) {
+        strip.setPixelColor(0, strip.Color(0, 0, 255));
+    } else if (strcmp(color, "YELLOW") == 0) {
+        strip.setPixelColor(0, strip.Color(255, 255, 0));
+    } else {
+        strip.setPixelColor(0, 0); // LED aus
+    }
+
+    strip.show();
+    delay(800);
+    strip.clear();
+    strip.show();
+    delay(200);
+}
+
+
+
+void colorsTest(){
+  for (int counter = 0; counter <3; counter++) {
+    const char* color = text_colors[counter];
+    show_color_sequence(color);
+
+  }
 }

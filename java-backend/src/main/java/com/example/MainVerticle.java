@@ -2,6 +2,7 @@ package com.example;
 
 import java.util.List;
 
+import com.example.highscore.HighscoreController;
 import com.example.player.PlayerController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,6 @@ public class MainVerticle extends AbstractVerticle {
 
         vertx.deployVerticle(mqtt);
         vertx.deployVerticle(http);
-
         setupHttpVerticle(http);
 
         logger.info("🚀 Alle Verticles und GameStateManager gestartet.");
@@ -56,7 +56,7 @@ public class MainVerticle extends AbstractVerticle {
     private void setupHttpVerticle(HttpServerVerticle httpVerticle) {
 
         final List<HttpController> controllers = List.of(
-                new ObjectController(vertx),new PlayerController(vertx)
+                new ObjectController(vertx),new PlayerController(vertx),new HighscoreController(vertx)
         );
 
         controllers.forEach(it -> it.registerRoutes(httpVerticle.router));
@@ -66,7 +66,7 @@ public class MainVerticle extends AbstractVerticle {
         Vertx vertx = Vertx.vertx();
         vertx.deployVerticle(new MainVerticle(), res -> {
             if (res.succeeded()) {
-                logger.info("Verticle deployment succeeded");
+                logger.info("Verticle deployment succeeded" );
             } else {
                 logger.error("Verticle deployment failed: {}", res.cause().getMessage());
             }

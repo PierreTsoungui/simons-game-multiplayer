@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <title>Simon Game Webcontroller</title>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-    <script  src="env.js"></script>
     <script defer type="module" src="controller.js"></script>
     <link rel="stylesheet" href="controller.css" />
     <link rel="icon" type="image/x-icon" href="simon_favicon.ico" />
@@ -32,8 +31,7 @@
       }
       .lcd-display {
         margin: 0 auto 30px auto;
-        width: 350px;
-        height: 125px;
+        width: 340px;
         background: #181818;
         border-radius: 10px;
         padding: 16px 0;
@@ -106,10 +104,9 @@
       <div class="lcd-line"></div>
       <div class="lcd-line"></div>
       <div class="lcd-line"></div>
-      <div class="lcd-line"></div>
     </div>
     <div class="joystick-container">
-      <button class="color-button green"   data-color="green"  data-tone="329" id="ready"></button>
+      <button class="color-button green"   data-color="green"  data-tone="329"></button>
       <button class="color-button red"     data-color="red"    data-tone="261"></button>
       <button class="color-button yellow"  data-color="yellow" data-tone="392"></button>
       <button class="color-button blue"    data-color="blue"   data-tone="195"></button>
@@ -117,12 +114,9 @@
     </div>
     <script>
       // Controller-ID aus URL übernehmen und anzeigen
-      console.log("MQTT_BROKER_URL: ", window.__ENV__.MQTT_BROKER_URL);
-      console.log("MQTT_BROKER_PORT: ", window.__ENV__.MQTT_BROKER_PORT);
-      console.log("MQTT_USERNAME: ", window.__ENV__.MQTT_USERNAME);
-      console.log("MQTT_PASSWORD: ", window.__ENV__.MQTT_PASSWORD);
-      console.log("MQTT_MESSAGE_PREFIX: ", window.__ENV__.MQTT_MESSAGE_PREFIX);
+      const params = new URLSearchParams(window.location.search);
+      const controllerId = params.get('controllerId') || 'unbekannt';
+      document.getElementById('controllerId').textContent = controllerId;
     </script>
   </body>
 </html>
-

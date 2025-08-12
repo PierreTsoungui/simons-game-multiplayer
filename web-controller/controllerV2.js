@@ -12,7 +12,6 @@ let currentRound = null;
 let inputTopics = "simon/game/input";
 let maxTime = null;
 let countdownInterval = null;
-let playerName = localStorage.getItem("playerName");
 
 // Generate controller ID if not provided
 if (!controllerId) {
@@ -23,10 +22,8 @@ if (!controllerId) {
 controllerIdElement.innerText = controllerId;
 
 window.addEventListener("unload", () => {
-
     const data = JSON.stringify({ controllerId: controllerId });
-    //navigator.sendBeacon("http://localhost:8080/api/controller/disconnect", data);
-    myPublishMessage("simon/game/disconnect", data, false);
+    navigator.sendBeacon("http://localhost:8080/api/controller/disconnect", data);
 });
 
 // MQTT client setup
@@ -178,7 +175,6 @@ client.on('message', (topic, messageBuffer) => {
     } else if (topic === mqttMessagePrefix + `simon/game/${controllerId}/sequence`) {
         handleTopics(msg);
     }
-
 });
 
 // Handle start and sequence topics
@@ -216,7 +212,7 @@ async function playColorSequence(colors, currentRound) {
     isPlayerTurn = true;
     playerInput = [];
     let timeLeft = maxTime;
-    updateLCD(`Round: ${currentRound}`, "Your turn!", `Time: ${maxTime}s`, `Left: ${timeLeft}s`);
+    updateLCD(`Round: ${currentRound}`, "Your turn! Press the colors in order", `Time: ${maxTime}s`, `Left: ${timeLeft}s`);
 
     // Start countdown timer
     inputStartTime = Date.now();
@@ -229,7 +225,7 @@ async function playColorSequence(colors, currentRound) {
     countdownInterval = setInterval(() => {
         timeLeft--;
         showCountdownOnDisplay(timeLeft);
-       // updateLCD(`Round: ${currentRound}`, "Your turn!", `Time: ${maxTime}s`, `Left: ${timeLeft}s`);
+        // updateLCD(`Round: ${currentRound}`, "Your turn! Press the colors in order", `Time: ${maxTime}s`, `Left: ${timeLeft}s`);
         if (timeLeft <= 0) {
             clearInterval(countdownInterval);
             countdownInterval = null;
@@ -322,61 +318,122 @@ document.addEventListener("keydown", (event) => {
     }
 });
 
-// Demo mode (unchanged)
-/*const demoButton = document.createElement("button");
-demoButton.textContent = "Start Singleplayer Demo";
-demoButton.id = 'demo-button';
-document.body.appendChild(demoButton);
-demoButton.addEventListener('click', startDemo);
 
-const demoGame = {
-    currentSequence: [],
-    expectedIndex: 0,
-    playtime: 0,
-    round: 0,
-    isRunning: false,
-    currentIntervalId: null
-};
-
-async function startDemo() {
-    demoButton.disabled = true;
-    demoGame.isRunning = true;
-    demoGame.currentSequence = [getRandomColor()];
-    demoGame.playtime = 0;
-    demoGame.round = 1;
-    demoGame.expectedIndex = 0;
-    await playColorSequence(demoGame.currentSequence);
-    demoGame.currentIntervalId = setInterval(() => updateLCD(`Demo ${demoGame.round}`, `Playtime: ${++demoGame.playtime}ms`), 1);
-}
-
-const colors = ["green", "red", "yellow", "blue"];
-function getRandomColor() {
-    return colors[Math.floor(Math.random() * colors.length)];
-}
-
-document.querySelectorAll('.color-button').forEach(button => {
-    button.addEventListener('click', async (event) => {
-        if (!demoGame.isRunning) return;
-        const color = event.target.getAttribute('data-color');
-        if (color !== demoGame.currentSequence[demoGame.expectedIndex]) {
-            clearInterval(demoGame.currentIntervalId);
-            updateLCD(`Demo ${demoGame.round}`, `Playtime: ${demoGame.playtime}ms`, 'Ended');
-            demoButton.disabled = false;
-            demoGame.isRunning = false;
-        } else {
-            demoGame.expectedIndex++;
-            if (demoGame.expectedIndex === demoGame.currentSequence.length) {
-                clearInterval(demoGame.currentIntervalId);
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                demoGame.currentSequence.push(getRandomColor());
-                demoGame.expectedIndex = 0;
-                demoGame.round++;
-                updateLCD(`Demo ${demoGame.round}`, `Playtime: ${++demoGame.playtime}ms`);
-                await playColorSequence(demoGame.currentSequence);
-                demoGame.currentIntervalId = setInterval(() => updateLCD(`Demo ${demoGame.round}`, `Playtime: ${demoGame.playtime++}ms`), 1);
-            }
-        }
-    });
-});*/
 
 updateLCD('Welcome', 'to', 'Simon');
+
+//Handle user's menu
+const userMenuButton = document.getElementById('userMenuButton');
+const userMenuDropdown = document.getElementById('userMenuDropdown');
+const menuPlayerName = document.getElementById('menuPlayerName');
+const editProfileBtn = document.getElementById('editProfileBtn');
+
+//We do load the player's name from the local storage here
+const playerName = localStorage.getItem("playerName") || 'Username';
+console.log(playerName);
+userMenuButton.textContent = `👤 ${playerName} ▼`;
+menuPlayerName.textContent = playerName;
+
+//We handle drop down here
+userMenuButton.addEventListener('click', function(e) {
+    e.stopPropagation();// Prevent click from propagating to the document
+
+    userMenuDropdown.style.display = userMenuDropdown.style.display === 'block' ? 'none' : 'block';// handle dropdown visibility
+});
+
+
+// Hide dropdown when clicking outside
+document.addEventListener('click', function() {
+    userMenuDropdown.style.display = 'none';
+});
+
+// Edit profile button
+editProfileBtn.addEventListener('click', function(e) {
+    e.stopPropagation(); // Prevent click from propagating to the document
+    const oldModal = document.getElementById('editProfileModal');
+    if (oldModal) oldModal.remove(); // Remove old modal if it exists
+
+
+    // Modal HTML with password fields
+    const modalHtml = `
+<div id="editProfileModal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0006;display:flex;align-items:center;justify-content:center;z-index:200;">
+  <div style="background:#fff;padding:2em 2em 1em 2em;border-radius:10px;min-width:300px;box-shadow:0 4px 32px #0004;position:relative; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#000;">
+    <h2 style="margin-top:0; margin-bottom:1em;">Edit Profile</h2>
+    <form id="profileForm" style="display:flex;flex-direction:column;">
+      
+      <label for="editPassword" style="font-weight:600;">New Password:</label>
+      <input type="password" id="editPassword" name="editPassword" placeholder="Leave blank to keep current" style="width:100%;padding:0.5em;margin-bottom:1em; border:1px solid #2e7d32; border-radius:4px; outline:none;" required>
+      
+      <label for="editPasswordConfirm" style="font-weight:600;">Confirm New Password:</label>
+      <input type="password" id="editPasswordConfirm" name="editPasswordConfirm" placeholder="Repeat new password" style="width:100%;padding:0.5em;margin-bottom:1.5em; border:1px solid #2e7d32; border-radius:4px; outline:none;" required>
+      
+      <div style="display:flex;justify-content:space-between;">
+        <button type="submit" style="
+          padding:0.5em 2em;
+          background-color: #81c784;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: background-color 0.3s ease;
+        "
+        onmouseover="this.style.backgroundColor='#66bb6a'"
+        onmouseout="this.style.backgroundColor='#81c784'">
+          Save
+        </button>
+        
+        <button type="button" id="closeProfileModal" style="
+          padding:0.5em 2em;
+          background-color: #a5d6a7;
+          color: #2e7d32;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: background-color 0.3s ease;
+        "
+        onmouseover="this.style.backgroundColor='#81c784'"
+        onmouseout="this.style.backgroundColor='#a5d6a7'">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+`;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+
+    // Handle form submission
+    document.getElementById('profileForm').addEventListener('submit', async function (ev) {
+        ev.preventDefault();// Prevent default form submission
+        const newPassword = document.getElementById('editPassword').value;
+        const confirmPassword = document.getElementById('editPasswordConfirm').value;
+
+        if (newPassword || confirmPassword) {
+            if (newPassword !== confirmPassword) {
+                alert("Passwords do not match!");
+                return;
+            }
+            if (newPassword.length < 4) {
+                alert("Password must contain at least 4 characters!");
+                return;
+            }
+        }
+        const playerId = localStorage.getItem('playerId');
+        if (!playerId) {
+            alert("No player is logged in!");
+        }
+
+        //Building the different payloads for the transactions
+        const payload = {id: playerId, password: newPassword};
+
+        myPublishMessage("simon/game/players/updatePassword",JSON.stringify(payload), false);
+
+    });
+    // Close modal button
+    document.getElementById('closeProfileModal').addEventListener('click', function () {
+        document.getElementById('editProfileModal').remove(); // Remove modal
+    });
+})

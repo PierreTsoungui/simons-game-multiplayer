@@ -1,0 +1,264 @@
+openapi: 3.0.0
+info:
+  title: Simon Game API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+paths:
+  /api/players/register:
+    post:
+      summary: Register a new player
+      tags: [Players]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - playerName
+                - password
+              properties:
+                playerName:
+                  type: string
+                  example: "JohnDoe"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        '201':
+          description: Player created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Player created successfully"
+        '400':
+          description: Invalid input
+
+  /api/players/login:
+    post:
+      summary: Log in a player
+      tags: [Players]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - playerName
+                - password
+                - controllerId
+              properties:
+                playerName:
+                  type: string
+                  example: "JohnDoe"
+                password:
+                  type: string
+                  example: "password123"
+                controllerId:
+                  type: string
+                  example: "ctrl-1234"
+      responses:
+        '201':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Login successful"
+                  playerId:
+                    type: string
+                    example: "42"
+                  playerName:
+                    type: string
+                    example: "JohnDoe"
+        '400':
+          description: Invalid credentials
+
+  /api/players/updateProfile:
+    patch:
+      summary: Update a player's password
+      tags: [Players]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - password
+              properties:
+                id:
+                  type: string
+                  example: "42"
+                password:
+                  type: string
+                  example: "newPassword123"
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Profile updated successfully"
+        '400':
+          description: Missing or invalid fields
+
+
+  /api/waitingArea:
+    get:
+      summary: Get players in waiting area
+      description: Retrieves a list of players currently in the waiting area.
+      responses:
+        '200':
+          description: List of players in the waiting area
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    playerName:
+                      type: string
+                      example: "Thierry"
+                    controllerId:
+                      type: string
+                      example: "controller-123"
+                    playerStatus:
+                      type: boolean
+                      example: "ready"
+                    gameRound:
+                      type: integer
+                      example: 1
+                    totalMoveTime:
+                      type: integer
+                      example: 30000
+        '404':
+          description: No players found in the waiting area
+  /api/controller/active:
+    get:
+      summary: Get active controller(s)
+      description: Retrieves the active controller(s) for the game.
+      responses:
+        '200':
+          description: Active controller(s) retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    controllerId:
+                      type: string
+                      example: "controller-123"
+        '404':
+          description: No active controller found
+  /api/players/logout:
+    get:
+      summary: Player logout
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: The ID of the player to log out
+          schema:
+            type: string
+            example: "player-123"
+      responses:
+        '200':
+          description: Player logged out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Player logged out successfully"
+        '404':
+          description: Invalid request or player not logged in
+        '500':
+          description: Internal server error
+  /api/game/start:
+    post:
+      summary: Start a game
+      description: Initiates a new game session.
+      responses:
+        '200':
+          description: Game started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Game started successfully"
+        '409':
+          description: A game is already running
+        '500':
+          description: Internal server error
+  /api/controller/disconnect:
+    post:
+      summary: Disconnect a controller
+      description: Removes a controller from the controller's active list and notifies other players.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                controllerId:
+                  type: string
+                  example: "controller-123"
+      responses:
+        '200':
+          description: Controller disconnected successfully
+        '404':
+          description: Controller not found
+        '500':
+          description: Internal server error
+  /api/highscores:
+    get:
+      summary: Get highscores
+      description: Retrieves the top 10 scores attained.
+      responses:
+        '200':
+          description: Highscores retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    playerName:
+                      type: string
+                      example: "Barack"
+                    score:
+                      type: integer
+                      example: 1000
+                    totalMoveTime:
+                      type: integer
+                      example: 30000
+        '404':
+          description: No highscores found
+        '500':
+          description: Internal server error

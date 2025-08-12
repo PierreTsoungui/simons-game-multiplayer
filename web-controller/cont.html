@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simon Game Webcontroller mit User Profile</title>
+    <style>
+        /* Grund-Styles für Body */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: radial-gradient(ellipse at center, #7c7f81 0%, #1c1c1c 100%);
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 40px 20px 20px 20px;
+            user-select: none;
+        }
+
+        /* Überschrift */
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 8px #000a;
+            user-select: none;
+        }
+        #controllerId {
+            font-weight: normal;
+            font-size: 1rem;
+            color: #ccc;
+        }
+
+        /* LCD Display */
+        .lcd-display {
+            width: 360px;
+            background: #0f0f0f;
+            border-radius: 12px;
+            box-shadow: inset 0 0 20px #050505;
+            padding: 12px 16px;
+            margin-bottom: 40px;
+        }
+        .lcd-line {
+            height: 20px;
+            background: #0f3;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            box-shadow: 0 0 12px #0f3;
+        }
+
+        /* Joystick Container */
+        .joystick-container {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            margin-bottom: 80px;
+        }
+
+        /* Farbtasten */
+        .color-button {
+            position: absolute;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 20px #0008;
+            transition: box-shadow 0.3s ease;
+            opacity: 0.9;
+        }
+        .color-button:hover {
+            opacity: 1;
+            box-shadow: 0 0 25px #fff9;
+        }
+        .color-button.green {
+            width: 130px;
+            height: 130px;
+            background: #27ae60;
+            top: 10px;
+            left: 10px;
+        }
+        .color-button.red {
+            width: 130px;
+            height: 130px;
+            background: #c0392b;
+            top: 10px;
+            right: 10px;
+        }
+        .color-button.yellow {
+            width: 130px;
+            height: 130px;
+            background: #f1c40f;
+            bottom: 10px;
+            left: 10px;
+        }
+        .color-button.blue {
+            width: 130px;
+            height: 130px;
+            background: #2980b9;
+            bottom: 10px;
+            right: 10px;
+        }
+
+        /* Joystick Mitte */
+        .joystick-center {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: #222;
+            border-radius: 50%;
+            top: calc(50% - 40px);
+            left: calc(50% - 40px);
+            box-shadow: 0 0 18px #000a inset;
+            text-align: center;
+            line-height: 80px;
+            font-size: 42px;
+            color: #888;
+            user-select: none;
+        }
+
+        /* User Menü Container */
+        #userMenu {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            user-select: none;
+            z-index: 2000;
+        }
+
+        #userMenuButton {
+            background: #333;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #eee;
+            font-size: 1rem;
+            box-shadow: 0 2px 8px #000a;
+            transition: background-color 0.3s ease;
+        }
+        #userMenuButton:hover {
+            background: #555;
+        }
+
+        /* Dropdown Menü */
+        #userMenuDropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            background: #222;
+            box-shadow: 0 2px 12px #000c;
+            border-radius: 8px;
+            min-width: 200px;
+            margin-top: 8px;
+            z-index: 1000;
+            color: #eee;
+        }
+        #userMenuDropdown div {
+            padding: 16px 16px 8px 16px;
+            border-bottom: 1px solid #444;
+            font-weight: bold;
+        }
+
+        #userMenuDropdown button {
+            width: 100%;
+            background: #333;
+            border: none;
+            padding: 12px;
+            color: #eee;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 0 0 8px 8px;
+            transition: background-color 0.3s ease;
+        }
+        #userMenuDropdown button:hover {
+            background: #27ae60; /* grün hover */
+            color: white;
+        }
+        #endGameBtn:hover {
+            background: #c0392b !important; /* rot hover für End Game */
+        }
+
+        /* Modal Hintergrund */
+        .modal {
+            display: none; /* standard versteckt */
+            position: fixed;
+            z-index: 1500;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeInBG 0.3s ease;
+        }
+        @keyframes fadeInBG {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+
+        /* Modal Box */
+        .modal-content {
+            background: #121212;
+            padding: 40px 50px;
+            border-radius: 16px;
+            box-shadow: 0 0 35px #000c;
+            width: 460px;
+            max-width: 90vw;
+            color: #eee;
+            animation: popIn 0.3s ease;
+        }
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.85);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+        }
+
+        label {
+            display: block;
+            margin-top: 22px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            user-select: none;
+        }
+        input[type="password"] {
+            margin-top: 10px;
+            width: 100%;
+            padding: 18px 16px;
+            border-radius: 10px;
+            border: none;
+            font-size: 1.1rem;
+            background: #222;
+            color: #eee;
+            box-shadow: inset 0 0 8px #0008;
+            transition: box-shadow 0.3s ease;
+        }
+        input[type="password"]:focus {
+            outline: none;
+            box-shadow: 0 0 14px #27ae60;
+            background: #1a1a1a;
+        }
+
+        .modal-actions {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        button.btn {
+            padding: 16px 36px;
+            font-size: 1.2rem;
+            border-radius: 14px;
+            cursor: pointer;
+            border: none;
+            font-weight: 700;
+            user-select: none;
+            transition: background-color 0.3s ease;
+        }
+        button.btn-green {
+            background-color: #27ae60;
+            color: white;
+        }
+        button.btn-green:hover {
+            background-color: #219150;
+        }
+        button.btn-grey {
+            background-color: #7f8c8d;
+            color: white;
+        }
+        button.btn-grey:hover {
+            background-color: #6b7a7a;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Webcontroller <small id="controllerId">(id)</small></h1>
+
+<div class="lcd-display">
+    <div class="lcd-line"></div>
+    <div class="lcd-line"></div>
+    <div class="lcd-line"></div>
+    <div class="lcd-line"></div>
+</div>
+
+<div class="joystick-container">
+    <button class="color-button green"   data-color="green"  data-tone="329" id="ready"></button>
+    <button class="color-button red"     data-color="red"    data-tone="261"></button>
+    <button class="color-button yellow"  data-color="yellow" data-tone="392"></button>
+    <button class="color-button blue"    data-color="blue"   data-tone="195"></button>
+    <div class="joystick-center">●</div>
+</div>
+
+<!-- User Menü -->
+<div id="userMenu">
+    <button id="userMenuButton">👤 Username ▼</button>
+    <div id="userMenuDropdown" aria-label="User menu">
+        <div id="menuPlayerName" aria-live="polite">Username</div>
+        <button id="editProfileBtn" type="button">Edit Profile</button>
+        <button id="endGameBtn" type="button" style="background:#c0392b;">End Game</button>
+    </div>
+</div>
+
+<!-- Passwort ändern Modal -->
+<div id="profileModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+    <div class="modal-content">
+        <h2 id="modalTitle">Change Password</h2>
+        <label for="newPassword">New Password:</label>
+        <input type="password" id="newPassword" autocomplete="new-password" placeholder="Enter new password" />
+
+        <label for="confirmPassword">Confirm New Password:</label>
+        <input type="password" id="confirmPassword" autocomplete="new-password" placeholder="Confirm new password" />
+
+        <div class="modal-actions">
+            <button id="savePasswordBtn" class="btn btn-green" type="button">Save</button>
+            <button id="cancelProfileBtn" class="btn btn-grey" type="button">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Menü umschalten
+    const userMenuButton = document.getElementById("userMenuButton");
+    const userMenuDropdown = document.getElementById("userMenuDropdown");
+    userMenuButton.addEventListener("click", () => {
+        userMenuDropdown.style.display = userMenuDropdown.style.display === "block" ? "none" : "block";
+    });
+
+    // Modal öffnen
+    const editProfileBtn = document.getElementById("editProfileBtn");
+    const profileModal = document.getElementById("profileModal");
+    editProfileBtn.addEventListener("click", () => {
+        profileModal.style.display = "flex";
+        userMenuDropdown.style.display = "none";
+        clearInputs();
+    });
+
+    // Modal schließen - Cancel
+    const cancelProfileBtn = document.getElementById("cancelProfileBtn");
+    cancelProfileBtn.addEventListener("click", () => {
+        profileModal.style.display = "none";
+    });
+
+    // End Game Button - schließt Fenster/Tab
+

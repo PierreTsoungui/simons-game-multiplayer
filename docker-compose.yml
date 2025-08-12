@@ -1,21 +1,21 @@
 
 services:
-  mosquitto:
-    container_name: mosquitto
-    image: eclipse-mosquitto:latest
-    ports:
-      - "1883:1883"  # Standard MQTT port
-      - "9001:9001"  # Websocket port
-    volumes:
-      - ./mosquitto/config:/mosquitto/config
-      - ./mosquitto/data:/mosquitto/data
-      - ./mosquitto/log:/mosquitto/log
-      - ./mosquitto/config/entrypoint.sh:/docker-entrypoint.sh
-    entrypoint: /docker-entrypoint.sh
-    environment:
-      - MQTT_USERNAME=${MQTT_USERNAME}
-      - MQTT_PASSWORD=${MQTT_PASSWORD}
-    restart: unless-stopped
+ # mosquitto:
+  #  container_name: mosquitto
+  #  image: eclipse-mosquitto:latest
+    #ports:
+    #  - "1883:1883"  # Standard MQTT port
+   #   - "9001:9001"  # Websocket port
+   # volumes:
+     # - ./mosquitto/config:/mosquitto/config
+    #  - ./mosquitto/data:/mosquitto/data
+    #  - ./mosquitto/log:/mosquitto/log
+    #  - ./mosquitto/config/entrypoint.sh:/docker-entrypoint.sh
+    #entrypoint: /docker-entrypoint.sh
+   # environment:
+     # - MQTT_USERNAME=${MQTT_USERNAME}
+   #   - MQTT_PASSWORD=${MQTT_PASSWORD}
+   # restart: unless-stopped
 
   mariadb:
     container_name: mariadb
@@ -56,13 +56,13 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      MQTT_HOST: mosquitto
-      MQTT_PORT: 1883
+      MQTT_BROKER_URL: ${MQTT_BROKER_URL}  # new kommunikation with broker
+      MQTT_PORT: ${MQTT_BROKER_PORT}
       MQTT_USERNAME: ${MQTT_USERNAME}
       MQTT_PASSWORD: ${MQTT_PASSWORD}
     depends_on:
-      mosquitto:
-          condition: service_started
+     # mosquitto:
+          #condition: service_started
       mariadb:
           condition: service_healthy
     restart: unless-stopped
@@ -80,19 +80,58 @@ services:
     restart: unless-stopped
 
 
-  nginx:
-    container_name: nginx
-    image: nginx:latest
+
+  nginx-frontend:
+    container_name: nginx-frontend
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d    # Stelle sicher, dass die Konfigurationsdatei vorhanden ist
-      - ./frontend:/usr/share/nginx/html    # Frontend-Verzeichnis als Volume
+      - ./nginx-frontend/conf.d:/etc/nginx/conf.d     # Stelle sicher, dass die Konfigurationsdatei vorhanden ist
+      - ./frontend:/usr/share/nginx/html              # Frontend-Verzeichnis als Volume
+    image: nginx:latest
     ports:
       - "80:80"    # HTTP
       - "443:443"  # HTTPS (konfiguriere SSL entsprechend)
-#    depends_on:
-#      - java-backend
+    environment:
+        MQTT_BROKER_URL: ${MQTT_BROKER_URL}
+        MQTT_BROKER_PORT: ${MQTT_BROKER_PORT}
+        MQTT_USERNAME: ${MQTT_USERNAME}
+        MQTT_PASSWORD: ${MQTT_PASSWORD}
+        MQTT_MESSAGE_PREFIX: ${MQTT_MESSAGE_PREFIX}
+
+    #depends_on:
+      #java-backend : # nicht auskommentiert
+      # condition: service_started # neue
     restart: unless-stopped
+  nginx-web-controller:
+    container_name: nginx-web-controller
+    image: nginx:latest
+    volumes:
+      - ./nginx-web-controller/conf.d:/etc/nginx/conf.d     # Stelle sicher, dass die Konfigurationsdatei vorhanden ist
+      - ./web-controller:/usr/share/nginx/html              # Web-Controller-Verzeichnis als Volume
+      - ./nginx-web-controller/entrypoint.sh:/docker-entrypoint.d/entrypoint.sh
+
+    ports:
+      - "81:81"    # HTTP
+      - "444:443"  # HTTPS (konfiguriere SSL entsprechend)
+    environment:
+      MQTT_BROKER_URL:      ${MQTT_BROKER_URL}
+      MQTT_BROKER_PORT:     ${MQTT_BROKER_PORT}
+      MQTT_USERNAME:        ${MQTT_USERNAME}
+      MQTT_PASSWORD:        ${MQTT_PASSWORD}
+      MQTT_MESSAGE_PREFIX:  ${MQTT_MESSAGE_PREFIX}
+    restart: unless-stopped
+
+  swagger-ui:
+      image: swaggerapi/swagger-ui:latest
+      container_name: swagger-ui
+      ports:
+        - "8082:8080"
+      volumes:
+        - /home/junior/Dokumente/InfProjekt/Gruppe24/swagger:/foo
+      environment:
+        - SWAGGER_JSON=/foo/swagger.json
+      restart: unless-stopped
 
 networks:
   default:
     name: simon-network
+

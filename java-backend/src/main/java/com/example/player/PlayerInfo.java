@@ -12,13 +12,15 @@ public class PlayerInfo {
     public int gameRound;
     public  boolean ready;
     public  long totalMoveTime; // in Sekunden oder Millisekunden
+    public  int score;
 
-    public PlayerInfo(String controllerId, int gameRound, boolean ready, long totalMoveTime, String playerName) {
+    public PlayerInfo(String controllerId, int gameRound, boolean ready, long totalMoveTime, String playerName, int score) {
         this.controllerId = controllerId;
         this.gameRound = gameRound;
         this.ready = ready;
         this.totalMoveTime = totalMoveTime;
         this.playerName = playerName;
+        this.score = score;
     }
 
 
@@ -57,10 +59,12 @@ public class PlayerInfo {
     public void addMoveTime(long moveTime) {
         this.totalMoveTime += moveTime;
     }
+    public  void addScore(int score) {
+        this.score += score;
+    }
 
-    // Round incrementation
-    public void nextRound() {
-        this.gameRound++;
+    public void updateRound( int round) {
+        this.gameRound= round;
     }
     public String formatMillis(long millis) {
         long seconds = millis / 1000;
@@ -73,7 +77,6 @@ public class PlayerInfo {
     public static JsonArray dataWaitingArea(Map<String, PlayerInfo> playerInfos) {
          return playerInfos.entrySet().stream()
                 .map(entry -> {
-                    String playerName = entry.getKey();
                     PlayerInfo infos = entry.getValue();
 
                     JsonObject json = new JsonObject()
@@ -101,15 +104,23 @@ public class PlayerInfo {
         json.put("gameRound", playerInfo.gameRound);
         json.put("ready", playerInfo.ready);
         json.put("totalMoveTime", playerInfo.totalMoveTime);
+
         return json;
+
+
     }
-   /* @Override
+
+    public  void resetPlayerInfo() {
+        this.gameRound =0;
+        this.ready = false;
+        this.totalMoveTime = 0;
+        this.score = 0;
+    }
+
+    @Override
     public String toString() {
-        return "PlayerInfo{" +
-                "controllerId='" + controllerId + '\'' +
-                ", gameRound=" + gameRound +
-                ", ready=" + ready +
-                ", totalMoveTime=" + totalMoveTime +
-                '}';
-    }*/
+       return   "PlayerTime:["+ this.totalMoveTime +"] , PlayerScore :[" + this.score + "]";
+
+    }
+
 }

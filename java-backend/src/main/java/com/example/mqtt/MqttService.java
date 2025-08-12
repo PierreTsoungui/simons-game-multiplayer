@@ -1,6 +1,7 @@
 package com.example.mqtt;
 
 import com.example.game.GameStateManager;
+import com.example.player.PlayerInfo;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.mqtt.MqttClient;
 
 import java.util.List;
+import java.util.Map;
 
 public class MqttService {
 
@@ -23,9 +25,12 @@ public class MqttService {
         this.mqttClient = mqttClient;
     }
 
-    public void publishGameStart() {
-        JsonObject data = new JsonObject().put("action", "start");
-        mqttClient.publish(mqttMessagePrefix + "simon/game/start", data.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
+    public void publishGameStart(JsonObject data, List<String> controllerIds) {
+        for (String id : controllerIds) {
+            String topic = mqttMessagePrefix + "simon/game/" + id + "/start";
+            logger.info("📡 MQTT published game start: {}", data);
+            mqttClient.publish(topic, data.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
+        }
         logger.info("📡 MQTT published game start: {}", data);
     }
 
@@ -50,7 +55,8 @@ public class MqttService {
     public void publishRegisterControllers(List<String>controllers) {
         JsonArray activeCtrls = new JsonArray(controllers);
         JsonObject data = new JsonObject().put("activeControllers", activeCtrls);
-        mqttClient.publish(mqttMessagePrefix + "simon/game/publishRegCtrls", data.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
+
+        mqttClient.publish(mqttMessagePrefix + "simon/game/controllers/active", data.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
 
         logger.info("📡 MQTT published controllers : {} on {}", data,mqttMessagePrefix);
     }
@@ -63,11 +69,39 @@ public class MqttService {
     }
 
     /// MqttService.java
-    public void publishColorSequence(JsonArray sequence, int round) {
-        JsonObject data = new JsonObject().put("sequence", sequence).put("round", round);
-        mqttClient.publish(mqttMessagePrefix +"simon/game/sequence", data.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
+    public void publishColorSequence(JsonObject json, List<String> controllerIds) {
+        for (String id : controllerIds) {
+            String topic = mqttMessagePrefix + "simon/game/" + id + "/sequence";
+            logger.info("📡 MQTT published game sequence: {}", json);
+            mqttClient.publish(topic, json.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
+        }
+        logger.info("📡 MQTT published game sequence: {}", json);
     }
     public void publishJoinedPlayerInfo(JsonObject playerData) {
-        mqttClient.publish(mqttMessagePrefix +"/simon/game/events/playerJoined", playerData.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
+        mqttClient.publish(mqttMessagePrefix +"simon/game/events/playerJoined", playerData.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
+    }
+
+    public void publishGameInfo(JsonObject data, List<String> controllerIds) {
+        for (String id : controllerIds) {
+            String topic = mqttMessagePrefix + "simon/game/" + id + "/info";
+            logger.info("📡 MQTT published  controllerInfo : {} on {}", data,mqttMessagePrefix);
+            mqttClient.publish(topic, data.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
+        }
+    }
+
+    public void publishPlayerProgress(JsonObject playerData) {
+        mqttClient.publish( mqttMessagePrefix + "simon/game/events/players/progress", playerData.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false );
+        logger.info("📡 MQTT published  player's Progress: {}", playerData);
+
+
+    }
+
+    public  void publishUpdateWaitingArea(JsonArray  jsonArray) {
+
+        JsonObject data= new JsonObject().put("waitingAreaData",  jsonArray );
+        mqttClient.publish(mqttMessagePrefix +"simon/game/events/waitingAreaUpdated", data.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
+        logger.info("📡 MQTT published  Data For WaitingArea updated: {}",  data);
+
+
     }
 }

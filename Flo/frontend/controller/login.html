@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LOGIN PAGE</title>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-    <script  src="env.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -103,74 +101,37 @@
         <div class="simon-btn yellow" id="yellow"></div>
         <div class="simon-btn blue" id="blue"></div>
     </div>
-    <h3><center>Enter your credidentials to login</center></h3>
+    <h3><center>Enter your credidentials to login or login using (your) RFID card via the controller</center></h3>
     <form id="loginForm">
         <input type="text" id="username" placeholder="Enter your username" required><br><br>
         <input type="password" id="password" placeholder="Enter your password" required><br><br>
-        <button type="button" id="open-controller-btn">New Controller</button>
-        <label for="controllerIds">Controllerauswahl:</label>
-        <select id="controllerIds" name="controllerId" required>
+        <label for="controllerId">Controllerauswahl:</label>
+        <select id="controllerId" name="controllerId" required>
             <option value="">-- Wähle einen Controller --</option>
+            <option value ="web">New web-Controller</option>
         </select>
         <button type="submit">Login and add the player to the Lobby</button><br><br>
+        <button type="button" id="rfidLogin">Login with RFID</button>
     </form>
     <div id="loginMessage"></div>
     <div style="text-align:center; margin-top: 1rem;">
         Don't yet have an account?
-        <a href="register.html">Register here!</a>
+        <a href="../../web-controller/register.html">Register here!</a>
     </div>
-</div>
 
     <script>
-
-
-        document.addEventListener("DOMContentLoaded", () => {
-            fetchActiveController();
-
-        });
-
-        function fetchActiveController(){
-            fetch('http://localhost:8080/api/controller/active') // dein Endpoint im Backend
-                .then(response => {
-                    if (!response.ok) console.log("Fehler beim Abrufen der Daten");
-                    return response.json();
-                })
-                .then(data => {
-                    showAvailableController(data)
-
-                })
-                .catch(error => {
-                    console.error("Fehler beim Laden der Waiting Area:", error);
-                });
-
-        }
-
-        function showAvailableController(data){
-            let dropDownCIds = document.getElementById("controllerIds")
-            dropDownCIds.innerHTML = '<option value="">-- Wähle einen Controller --</option>';
-
-            data.forEach((ctrl, i) => {
-
-                const option = document.createElement("option");
-                option.value = ctrl;
-                option.textContent = `Web-Controller ${i + 1}`;
-                dropDownCIds.appendChild(option);
-            });
-        }
-        let mqttMessagePrefix = window.__ENV__.MQTT_MESSAGE_PREFIX || 'simon/game/';
-
-            document.getElementById('loginForm').addEventListener('submit', async function(e) {// Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {// Handle form submission
             e.preventDefault();// Prevent the default form submission behavior,meaning the page will not reload
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const controllerId = document.getElementById('controllerIds').value;
+            const controllerId = document.getElementById('controllerId').value;
 
-            //Case validation handling on the username, password and controllerId like empty fields...
-            if(username.trim() === "" || password.trim() === "" || controllerId.trim() === ""){
-                const msgDiv = document.getElementById('loginMessage');
-                msgDiv.textContent = "Please fill in all fields!";
-                msgDiv.style.color = "red";
-                return; // Exit the function if any field is empty
+
+            const msgDiv = document.getElementById('loginMessage');
+            if(password.trim()==="" || username.trim()===""){
+                msgDiv.textContent = 'Passwords do not match or username is empty!';
+                msgDiv.style.color = 'red';
+                return;
             }
 
             const response = await fetch('http://localhost:8080/api/players/login', {// Send login request and await is to continue only when the response is received
@@ -178,54 +139,22 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     playerName: username,
-                    password: password,
-                    controllerId: controllerId//helps know if we are using a web or a hard controller
+                    hashPassword: password,
+                    controllerId: controllerId
                 })
             });
 
             const result = await response.json();
-            const msgDiv = document.getElementById('loginMessage');//a msgdiv is a div where we can put messages in it, like error messages or success messages
             if(response.ok) {
-                localStorage.setItem('playerName', result.playerName);
-                localStorage.setItem('playerId', result.playerId);
                 msgDiv.textContent = "Login successful!";
                 msgDiv.style.color = "green";
                 setTimeout(() => {
-                    window.location.href = "waitingArea.html";
-                }, 1500);
+                    window.location.href = "waitingArea.html";// Redirect to the waiting area after a successful login
+                }, 1000); // Redirect after 1 second
             }else{
                 msgDiv.textContent = result.error || "Login failed!";
                 msgDiv.style.color = "red";
             }
-        });
-        document.getElementById('open-controller-btn').onclick = function(e) {
-
-            window.open('controller.html', '_blank', 'noopener,noreferrer');
-
-        };
-        //MQTT
-        const client = mqtt.connect("ws://" + window.__ENV__.MQTT_BROKER_URL + ":" + window.__ENV__.MQTT_BROKER_PORT , {
-            username: window.__ENV__.MQTT_USERNAME,
-            password: window.__ENV__.MQTT_PASSWORD,
-        });
-        client.on('connect', () => {
-            console.log('✅ Connected to MQTT broker');
-            client.subscribe(mqttMessagePrefix +'simon/game/controllers/active', err => {
-                if (err) console.error('❌ Subscription Error:', err);
-                else console.log('📡 Subscribed to: active controllers');
-
-
-            });
-
-        });
-
-        client.on('message', (topic, payload) => {
-            const msg = JSON.parse(payload.toString());
-            console.log(`📥 Message received [${topic}]:`, msg);
-
-            showAvailableController(msg.activeControllers);
-
-            console.log(`📥 Message received [${topic}]:`, msg);
         });
     </script>
 </body>

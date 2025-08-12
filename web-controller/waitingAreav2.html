@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiting Area</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script  src="env.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eeeadf;
+            margin: 0;
+            display:flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1{
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        table{
+            border-collapse: collapse;
+            width: 80%;
+            margin: 2rem auto 1rem auto;
+            background: #fff;
+            box-shadow: 0 0 100px #0002;
+        }
+        th, td{
+            border: 1px solid #bbb;
+            padding: 0.7rem 1.2rem;
+            text-align:center;
+        }
+        th{
+            background: #4CAF50;
+            color: #fff;
+        }
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }/* Zebra striping for table rows */
+        .button-group{
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0 2rem 0;
+        }
+        button{
+            padding: 0.8rem 2rem;
+            font-size: 1.3rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            transition: background 0.3s;
+        }
+        button#highscore{
+            background-color: #2196f3; /* Different color for highscore button */
+        }
+        button#logout{
+            background-color: #f44336; /* Different color for logout button */
+        }
+        button:hover{
+            opacity: 0.8; /* Slight brightening on mouse over */
+        }
+        button#startGame{
+            background-color: #032963; /* Darker blue */
+        }
+        /*small logo*/
+        .simon-logo {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem auto;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .simon-quarter {
+            width: 40px;
+            height: 40px;
+            border-radius: 0 100% 0 0;
+            margin: 0;
+        }
+        .simon-quarter.green   { background: #2ecc71; transform: rotate(0deg); }
+        .simon-quarter.red     { background: #e74c3c; transform: rotate(90deg); }
+        .simon-quarter.yellow  { background: #f1c40f; transform: rotate(270deg); }
+        .simon-quarter.blue    { background: #3498db; transform: rotate(180deg); }
+        .simon-logo .simon-quarter {
+            float: left;
+        }
+        .simon-logo.rotating {
+            animation: rotate-logo 1s linear;
+        }
+        @keyframes rotate-logo {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+<h1><center>Waiting Area - Simon's Game Lobby</center></h1>
+<div class="simon-logo">
+    <div class="simon-quarter green"></div>
+    <div class="simon-quarter red"></div>
+    <div class="simon-quarter yellow"></div>
+    <div class="simon-quarter blue"></div>
+</div>
+<table border="1" cellspacing="0" cellpadding="5">
+    <thead>
+    <tr>
+        <th>Player Name</th>
+        <th>ControllerID</th>
+        <th>Player status</th>
+        <th>Game Round</th>
+        <th>Total Move Time</th>
+    </tr>
+    </thead>
+    <tbody id="lobbyTableBody">
+    <!-- Player data will be dynamically inserted here -->
+    </tbody>
+</table>
+<div class="button-group">
+    <button id="startGame">Start Game</button>
+    <button id="highscore">Highscore</button>
+</div>
+</body>
+<script>
+    let isLoading= true;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchWaitingAreaData();
+        isLoading=false;
+    });
+
+    function fetchWaitingAreaData() {
+        fetch('http://localhost:8080/api/waitingArea')
+            .then(response => {
+                if (!response.ok) console.log("Fehler beim Abrufen der Daten");
+                return response.json();
+            })
+            .then(data => {
+
+
+                const tbody = document.getElementById("lobbyTableBody");
+                tbody.innerHTML = ""; // leeren
+                updateWaitingArea(data.waitingAreaData,true)
+
+            })
+            .catch(error => {
+                console.error("Fehler beim Laden der Waiting Area:", error);
+            });
+    }
+
+
+    //alter Code unten
+    document.getElementById('startGame').addEventListener('click', async function(){
+        const response = await fetch('http://localhost:8080/api/game/start', {
+            method: 'POST',
+        });
+
+        if(response.ok){
+            // Redirect to the controller page after starting the game
+            setTimeout(() => {
+                //  window.location.href = "controller.html";
+            }, 500);
+        }else{
+            alert("Failed to start the game!");
+        }
+    });
+
+    document.getElementById('highscore').addEventListener('click', function(){
+        window.location.href = "highscore.html";
+    });
+
+    //Rotation  of the small logo
+    document.querySelector('.simon-logo').addEventListener('click',function() {
+        this.classList.add('rotating');
+        setTimeout(() => {
+            this.classList.remove('rotating');
+        }, 1000); // rotation's duration
+    });
+
+    function  updateWaitingArea(data,isNotMqtt=false){
+
+        const tbody = document.getElementById("lobbyTableBody");
+        if(isNotMqtt){
+            tbody.innerHTML = "";
+        }
+
+        data.forEach(player => {
+            const row = document.createElement('tr');
+
+            const nameCell = document.createElement('td');
+            nameCell.textContent = player.playerName;
+            row.appendChild(nameCell);
+
+            const controllerCell = document.createElement('td');
+            controllerCell.textContent = player.controllerId;
+            row.appendChild(controllerCell);
+
+            const statusCell = document.createElement('td');
+            statusCell.textContent = player.status ? 'ready' : 'not ready';
+            row.appendChild(statusCell);
+
+            const roundCell = document.createElement('td');
+            roundCell.textContent = player.round;
+            row.appendChild(roundCell);
+
+            const timeCell = document.createElement('td');
+            timeCell.textContent = player.totalMoveTime;
+            row.appendChild(timeCell);
+
+            tbody.appendChild(row);
+        });
+
+    }
+    // MQTT
+    let mqttMessagePrefix = window.__ENV__.MQTT_MESSAGE_PREFIX || 'simon/game/';
+    const client = mqtt.connect("ws://" + window.__ENV__.MQTT_BROKER_URL + ":" + window.__ENV__.MQTT_BROKER_PORT , {
+        username: window.__ENV__.MQTT_USERNAME,
+        password: window.__ENV__.MQTT_PASSWORD,
+    });
+    client.on('connect', () => {
+        console.log('✅ Connected to MQTT broker');
+        client.subscribe(mqttMessagePrefix + 'simon/game/events/#', err => {
+            if (err) console.error('❌ Subscription Error:', err);
+            else console.log('📡 Subscribed to: notifyStatusChange');
+
+
+        });
+    })
+
+    client.on("message",(topic, payload)=>{
+        const msg = JSON.parse(payload.toString());
+        console.log(`📥 Message received [${topic}]:`, msg);
+        if(topic===mqttMessagePrefix +'simon/game/events/status/changed'){
+            const { controllerId, status}= msg
+            const rows= document.querySelectorAll("#lobbyTableBody tr")
+            rows.forEach(row =>{
+                const controllerCell= row.children[1];
+                if(controllerCell.textContent===controllerId){
+                    const statusCell= row.children[2];
+                    statusCell.textContent= status? "ready":"not ready"
+                }
+            });
+
+        }else if( topic===mqttMessagePrefix +'simon/game/events/playerJoined'){
+            if(isloading){
+                return;
+            }
+            updateWaitingArea(msg.waitingAreaData);
+        }
+        if(topic===mqttMessagePrefix + 'simon/game/events/players/progress') {
+            console.log(`📥 Message received [${topic}]:`, msg);
+            const {controllerId, round, status, totalMoveTime} = msg
+
+            const rows = document.querySelectorAll("#lobbyTableBody tr")
+            rows.forEach(row => {
+                const controllerCell = row.children[1];
+                if (controllerCell.textContent === controllerId) {
+                    const statusCell = row.children[2];
+                    statusCell.textContent = status ? "ready" : "not ready"
+                    const roundCell= row.children[3]
+                    roundCell.textContent=round;
+                    const moveTimeCell= row.children[4]
+                    moveTimeCell.textContent= totalMoveTime;
+                }
+            });
+        }
+    })
+
+
+
+</script>
+</html>
