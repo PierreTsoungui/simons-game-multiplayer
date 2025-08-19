@@ -115,11 +115,6 @@ yarn-error.log
 /esp32/.clangd/
 redm
 doc1
-# Sensible Konfigurationsdateien
-git rm --cached .env
-git rm --cached web-controller/env.js
+src/main/java/com/example/object
+esp32-project
 
-# ordner
-git rm --cahed -r src/main/java/com/example/object
-git rm --cahed -r esp32-project
-git rm --cahed -r doc1
