@@ -120,6 +120,6 @@ git rm --cached .env
 git rm --cached web-controller/env.js
 
 # ordner
-git rm --cahed src/main/java/com/example/object
-git rm --cahed esp32-project
-git rm --cahed doc1
+git rm --cahed -r src/main/java/com/example/object
+git rm --cahed -r esp32-project
+git rm --cahed -r doc1
