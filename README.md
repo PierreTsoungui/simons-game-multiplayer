@@ -1,84 +1,58 @@
-# Informatics Project "Simon Goes Multiplayer" - Summer Semester 2025
+# Simon Game – Project GROUP-24 (Uni Project)
 
-This repository contains a project where students will program an ESP32 microcontroller to implement the "Simon" game.
-The game data will be sent via MQTT to an MQTT broker and then forwarded to a backend application.
-The backend is implemented in Java using Vert.x (REST API) and uses MariaDB.
-The frontend is a static site (JS, HTML, CSS) and uses Bootstrap for styling.
+![Simon Game Banner](./simon.jpeg)
 
-> **WARNING**: This repository only provides a skeleton for your own implementation. <br>
-> The existing code base should be understood as a Proof-Of-Concept implementing the required communication channels, demonstrating how to connect the different sub-projects and does not prescribe any required functionality.
+This project implements a **multiplayer Simon game**.  
+Players must repeat color sequences that get longer and faster each round.  
+The project was completed as a **university project in a group of 2**.
+
+---
+
+## Features
+
+- Multiplayer mode with host and web controllers
+- Join as a guest via the browser
+- Highscore storage in a database
+- Real-time communication between backend and frontend
+- MQTT for controller interaction
+- Docker setup for easy deployment
+
+---
+
+## Technology Stack
+
+- **Backend:** Java (Vert.x)
+- **Database:** MariaDB/MySQL
+- **Frontend:** HTML, CSS, JavaScript (in the `web-controller` folder)
+- **Communication:** MQTT
+- **Containerization:** Docker & Docker Compose
+
+---
+
+## Project Structure (overview)
+
+```plaintext
+Group24/
+│
+├── java-backend/           # Backend (Vert.x + game logic)
+│   └── src/main/java/com.example/
+│        ├── database/      # Database integration
+│        ├── game/          # GameModel, Manager, GameService (game logic)
+│        ├── highscore/     # REST API for highscores
+│        ├── mqtt/          # MQTT communication
+│        └── player/        # REST API for players (Controller, Service, Repository)
+│
+├── web-controller/         # Frontend (browser controller with HTML, CSS, JS)
+│
+├── docker-compose.yml      # Docker setup
+├── README.md               # Project documentation
+└── .gitignore              # Git ignore file
+
+```
+---
 
 
-## [Project Introduction](./doc/Project-Introduction.md)
-
-## [User Stories](./doc/User-Stories.md)
-
-## Table of Contents
-
-- [Technologies Used](#technologies-used)
-- [Project Structure](#project-structure)
-- [Setup Instructions](#setup-instructions)
-  - [Prerequisites](#prerequisites)
-    - [Linux](#use-a-linux-based-os)
-    - [Docker](#install-docker)
-    - [Git](#add-an-ssh-key-to-gitlab)
-  - [Clone the Repository](#clone-the-repository)
-  - [Environment Variables](#environment-variables)
-  - [Build and Run the Project](#build-and-run-the-project)
-  - [Accessing the Application](#accessing-the-application)
-- [Detailed Explanation](#detailed-explanation)
-  - [Backend](#backend)
-  - [Frontend](#frontend)
-  - [ESP32 Microcontroller](#esp32-microcontroller)
-- [Usage](#usage)
-  - [Testing the API](#testing-the-api)
-  - [Sending MQTT Messages](#sending-mqtt-messages)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Technologies Used
-
-- **Java**: Programming language for the backend.
-- **Vert.x**: Toolkit for building reactive applications on the JVM.
-- **MariaDB**: Relational database management system.
-- **Docker**: Platform for developing, shipping, and running applications in containers.
-- **MQTT**: Lightweight messaging protocol for small sensors and mobile devices.
-- **Bootstrap**: CSS framework for developing responsive and mobile-first websites.
-- **ESP32**: Low-cost, low-power system on a chip microcontroller with integrated Wi-Fi and dual-mode Bluetooth.
-
-## Component-Architecture
-
-<img src="doc/comp_arch.png" width="1000px">
-
-## Setup Instructions
-
-### Prerequisites
-
-#### Use a linux based OS
-
-Either install a separate linux distro as a dual-boot (preferably Ubuntu, see [here for more information](https://wiki.ubuntuusers.de/Dualboot/)),
-or try your luck with [Windows WSL](https://learn.microsoft.com/en-us/windows/wsl/install) feature.
-
-> **WARNING**: We can and will only strongly support native / dual-boot installations of Ubuntu.
-
-#### Install Docker
-
-Follow the instructions for your operating system found [here](https://docs.docker.com/desktop/).
-
-#### Add an SSH-Key to GitLab
-
-To authenticate against our GitLab-Instance, please follow the instructions found [here](https://git.thm.de/help/user/ssh).
-
-### Clone the Repository
-
-1. Open a terminal or command prompt.
-2. Clone the repository:
-
-   ```bash
-   git clone <YourGitlabProject-URL>
-   cd <TheCreatedFolder>
-   ```
+## Running the Application:
 
 ### Environment Variables
 
@@ -137,23 +111,26 @@ To clean everything you did, run `docker system prune -a --volumes --force`.
 
 > **WARNING**: Keep in mind that `docker system prune` will erase everything you did in docker.
 
-### Accessing the Application
+## Accessing the Game
 
-| Service    | Port            | URL                       |
-|------------|-----------------|---------------------------|
-| Frontend   | `80` / `443`    | http://localhost          |
-| Web-Controller   | `80` / `443`    | http://localhost/controller/controller.html          |
-| phpMyAdmin | `8081`          | http://localhost:8081     |
-| Backend    | `8080`          | http://localhost:8080/api |
-| MariaDB    | `3306`          | --- n/a ---               |
-| MOSQUITTO  | `1883` / `9001` | --- n/a ---               |
+### For Hosts
 
+- Hosts start the game via the lobby page once at least two players are ready.
 
-## [Detailed Explanation](./doc/Explanation.md)
+### For Players (non-hosts)
 
-## Troubleshooting
+- Non-host players only need the controller page to participate.
+- Open `controller.html` in your browser (or the corresponding URL if served via a web server).
+- The controller page automatically connects to the game and allows you to send input live.
+- The associated JavaScript handles communication with the backend and sends your actions.
 
-- **Database Connection Issues**: Ensure that the database service is running and the environment variables are correctly set.
-- **MQTT Connection Issues**: Ensure that the MQTT broker service is running and the credentials are correctly set. Ensure your firewall not blocking MQTT.
-- **Build Issues**: Ensure that you have the correct versions of Docker and Docker Compose installed.
+This allows participation in the multiplayer game easily, without extra permissions.
 
+> **Important Note:**  
+> All players (except the host) must be authorized by the host before starting the game.
+
+- Each non-host player must log in first to establish the connection between player and controller.
+- After successful login, players are redirected to the waiting area, where they wait for the game to start.
+- The host can only start the game when at least two players are ready.
+
+This process ensures the multiplayer game runs smoothly and synchronously.
