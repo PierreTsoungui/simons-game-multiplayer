@@ -98,7 +98,6 @@ public class GameService {
                                 .put("inputTimeLimit",gsm.calculateInputTimeLimit(gsm.getCurrentSequence().size()))
                                 .put("Point(s)",  "0")
                                 .put("controllerIds", new JsonArray(controllerIds));
-
                         gsm.getEventBus().publish("group-24.simon.game.start", startMessage);
                         // Spiel läuft jetzt. Lock bleibt aktiv.
                     });
@@ -198,6 +197,7 @@ public class GameService {
                         insertAllScores(gsm.getPlayerScoreData());
                         gsm.getPlayerScoreData().clear();
                         logger.info(" playerScoreData  {}",gsm.getPlayerScoreData());
+                        gsm.getEventBus().publish("group-24.simon.game.endGame" , new JsonObject().put("message","EndGame"));
                     } else {
                         releaseGameLock();
                         logger.error("Failed to mark game as ended in DB: " + dbRes.cause().getMessage());

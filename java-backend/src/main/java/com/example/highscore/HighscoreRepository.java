@@ -20,7 +20,8 @@ public class HighscoreRepository {
         String query = "SELECT p.playerName, hs.score, hs.duration " +
                 "FROM highScore hs " +
                 "JOIN players p ON hs.playerId = p.playerId " +
-                "ORDER BY hs.score DESC, hs.duration ASC ";
+                "ORDER BY hs.score DESC, hs.duration ASC " +
+                "LIMIT 10";
 
         //We use preparedQuery even without params, good practice (against SQL injection)
         jdbcPool.preparedQuery(query)

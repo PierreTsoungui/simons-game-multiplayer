@@ -107,6 +107,7 @@
     <form id="loginForm">
         <input type="text" id="username" placeholder="Enter your username" required><br><br>
         <input type="password" id="password" placeholder="Enter your password" required><br><br>
+        <button id="guest">Continue as Guest</button>
         <button type="button" id="open-controller-btn">New Controller</button>
         <label for="controllerIds">Controllerauswahl:</label>
         <select id="controllerIds" name="controllerId" required>
@@ -203,6 +204,12 @@
             window.open('controller.html', '_blank', 'noopener,noreferrer');
 
         };
+
+        document.getElementById("guest").onclick= function (e) {
+            window.location.href="guestMode.html"
+        };
+
+
         //MQTT
         const client = mqtt.connect("ws://" + window.__ENV__.MQTT_BROKER_URL + ":" + window.__ENV__.MQTT_BROKER_PORT , {
             username: window.__ENV__.MQTT_USERNAME,

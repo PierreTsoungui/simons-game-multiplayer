@@ -1,21 +1,21 @@
 
 services:
- # mosquitto:
-  #  container_name: mosquitto
-  #  image: eclipse-mosquitto:latest
-    #ports:
-    #  - "1883:1883"  # Standard MQTT port
-   #   - "9001:9001"  # Websocket port
-   # volumes:
-     # - ./mosquitto/config:/mosquitto/config
-    #  - ./mosquitto/data:/mosquitto/data
-    #  - ./mosquitto/log:/mosquitto/log
-    #  - ./mosquitto/config/entrypoint.sh:/docker-entrypoint.sh
-    #entrypoint: /docker-entrypoint.sh
-   # environment:
-     # - MQTT_USERNAME=${MQTT_USERNAME}
-   #   - MQTT_PASSWORD=${MQTT_PASSWORD}
-   # restart: unless-stopped
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto:latest
+    ports:
+      - "1883:1883"  # Standard MQTT port
+      - "9001:9001"  # Websocket port
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+      - ./mosquitto/config/entrypoint.sh:/docker-entrypoint.sh
+    entrypoint: /docker-entrypoint.sh
+    environment:
+      - MQTT_USERNAME=${MQTT_USERNAME}
+      - MQTT_PASSWORD=${MQTT_PASSWORD}
+    restart: unless-stopped
 
   mariadb:
     container_name: mariadb

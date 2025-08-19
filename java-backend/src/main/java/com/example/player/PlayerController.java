@@ -13,6 +13,8 @@ import io.vertx.mqtt.MqttClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
+
 public class PlayerController implements HttpController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlayerController.class);
@@ -46,7 +48,6 @@ public class PlayerController implements HttpController {
     private void handleCreate(RoutingContext ctx) {
         JsonObject jsonBody = ctx.body().asJsonObject();
 
-        logger.debug("Ich habe die Nachricht empfängt;");
         try {
             if (jsonBody == null) {
                 ctx.response().setStatusCode(400).end("Request body must be JSON");
@@ -68,8 +69,9 @@ public class PlayerController implements HttpController {
                 } else {
                     ctx.response()
                             .setStatusCode(500)
-                            .end("Failed to create player in database");
-                    logger.error("Failed to create player in database");
+                            .putHeader("content-type", "application/json")
+                            .end(new JsonObject().put("error","This username is already taken. Please choose a different one.").encode());
+                    logger.error("Failed to create player in database;{}", res.cause().getMessage());
                 }
             });
 
@@ -98,7 +100,7 @@ public class PlayerController implements HttpController {
                 if (res.succeeded()) {
 
                     PlayerInfo p = new PlayerInfo(controllerId, 0, false, 0, playerName,0);
-                    JsonObject js = PlayerInfo.jsonFromPlayer(p);
+                    JsonArray js = PlayerInfo.jsonFromPlayer(p);
                     String playerId = gsm.playerIdFromControllerId(controllerId);
                     ctx.response().setStatusCode(201).putHeader("content-type", "application/json")
                             .end(new JsonObject()
@@ -107,7 +109,7 @@ public class PlayerController implements HttpController {
                     logger.debug("Login successful");
                     logger.info("Event published: player.logged in with name: {}", playerName);
 
-                    this.eventBus.publish("group-24.simon.game.events.playerJoined", new JsonObject().put(" waitingAreaData", js));
+                    this.eventBus.publish("group-24.simon.game.events.playerJoined", new JsonObject().put("waitingAreaData", js));
                 } else {
                     String errorMsg = res.cause() != null ? res.cause().getMessage() : "Unknown error";
                     ctx.response()

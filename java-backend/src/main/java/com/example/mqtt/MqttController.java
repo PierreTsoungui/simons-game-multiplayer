@@ -65,7 +65,7 @@ public class MqttController {
             data.remove("controllerIds");
             mqttService.publishGameInfo(data, controllerIds);
         });
-        this.eventBus.consumer("game.stop", msg -> {
+        this.eventBus.consumer("group-24.simon.game.endGame", msg -> {
             logger.info("Message received via EventBus: 'game.stop'");
             mqttService.publishGameStop();
         });

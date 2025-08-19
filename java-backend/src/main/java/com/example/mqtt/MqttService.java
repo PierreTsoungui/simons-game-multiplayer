@@ -31,12 +31,13 @@ public class MqttService {
             logger.info("📡 MQTT published game start: {}", data);
             mqttClient.publish(topic, data.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
         }
+        mqttClient.publish(mqttMessagePrefix + "simon/game/events/start", data.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
         logger.info("📡 MQTT published game start: {}", data);
     }
 
     public void publishGameStop() {
         JsonObject data = new JsonObject().put("action", "stop");
-        mqttClient.publish(mqttMessagePrefix + "simon/game/stop", data.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
+        mqttClient.publish(mqttMessagePrefix + "simon/game/events/stop", data.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
         logger.info("📡 MQTT published game stop: {}", data);
     }
 
@@ -75,6 +76,7 @@ public class MqttService {
             logger.info("📡 MQTT published game sequence: {}", json);
             mqttClient.publish(topic, json.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
         }
+        mqttClient.publish(mqttMessagePrefix + "simon/game/events/sequence", json.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
         logger.info("📡 MQTT published game sequence: {}", json);
     }
     public void publishJoinedPlayerInfo(JsonObject playerData) {
@@ -87,6 +89,7 @@ public class MqttService {
             logger.info("📡 MQTT published  controllerInfo : {} on {}", data,mqttMessagePrefix);
             mqttClient.publish(topic, data.toBuffer(), MqttQoS.AT_LEAST_ONCE, false, false);
         }
+        mqttClient.publish(mqttMessagePrefix +"simon/game/events/info", data.toBuffer(), MqttQoS.AT_MOST_ONCE, false, false);
     }
 
     public void publishPlayerProgress(JsonObject playerData) {

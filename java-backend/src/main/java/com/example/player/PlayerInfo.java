@@ -14,6 +14,7 @@ public class PlayerInfo {
     public  long totalMoveTime; // in Sekunden oder Millisekunden
     public  int score;
 
+
     public PlayerInfo(String controllerId, int gameRound, boolean ready, long totalMoveTime, String playerName, int score) {
         this.controllerId = controllerId;
         this.gameRound = gameRound;
@@ -21,6 +22,7 @@ public class PlayerInfo {
         this.totalMoveTime = totalMoveTime;
         this.playerName = playerName;
         this.score = score;
+
     }
 
 
@@ -77,16 +79,16 @@ public class PlayerInfo {
     }
 
 
-   public  static JsonObject jsonFromPlayer(PlayerInfo playerInfo) {
+   public  static JsonArray jsonFromPlayer(PlayerInfo playerInfo) {
         JsonObject json = new JsonObject();
         json.put("playerName", playerInfo.playerName);
         json.put("controllerId", playerInfo.controllerId);
-        json.put("gameRound", playerInfo.gameRound);
+        json.put("round", playerInfo.gameRound);
         json.put("ready", playerInfo.ready);
-        json.put("totalMoveTime", playerInfo.totalMoveTime);
+        json.put("totalMoveTime", playerInfo.formatMillis(playerInfo.totalMoveTime));
         json.put("score", playerInfo.score);
 
-        return json;
+        return  new JsonArray().add(json);
 
 
     }

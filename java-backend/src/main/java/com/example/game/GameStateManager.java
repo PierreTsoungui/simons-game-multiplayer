@@ -280,6 +280,7 @@ public Map<String, PlayerInfo> getPlayerScoreData() {
         // Gesamtpunktzahl
         return (int)(baseScore * timeFactor);
     }
+
 }
 
 

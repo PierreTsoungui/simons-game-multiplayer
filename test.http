@@ -35,3 +35,4 @@ POST http://localhost:8080/api/game/start
 
 ### HighScoreTest
 GET http://localhost:8080/api/highscores
+

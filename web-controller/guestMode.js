@@ -3,16 +3,10 @@ const params = new URLSearchParams(window.location.search);
 let controllerId = params.get('id');
 let isGameActive = false;
 let expectedSequence = [];
-let playerInput = [];
-let isPlayerTurn = false;
-let inputStartTime = null;
-let inputCompleted = false;
 let currentRound = null;
-let inputTopics = "simon/game/input";
 let maxTime = null;
 let countdownInterval = null;
 let playerName = null;
-
 let isLoading= true;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -40,33 +34,11 @@ function fetchWaitingAreaData() {
             console.error("Fehler beim Laden der Waiting Area:", error);
         });
 }
-//HANDLE GUEST MODE
-fetch('http://localhost:8080/api/guestMode')
-    .then(response => {
-        if (!response.ok) {
-            console.error("Fehler beim Abrufen der Guest Mode Daten");
-            return;
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data && data.waitingAreaData) {
-            console.log("Guest Mode Waiting Area Data:", data.waitingAreaData);
-            updateWaitingArea(data.waitingAreaData, true);
-        } else {
-            console.warn("Keine Daten für den Guest Mode erhalten");
-        }
-    })
-    .catch(error => {
-        console.error("Fehler beim Laden der Guest Mode Waiting Area:", error);
-    });
 
-// HANDLE GUEST MODE
-
-function  updateWaitingArea(data,isNotMqtt=false){
+function  updateWaitingArea(data,isLoading=false){
 
     const tbody = document.getElementById("lobbyTableBody");
-    if(isNotMqtt){
+    if(isLoading){
         tbody.innerHTML = "";
     }
 
@@ -101,18 +73,14 @@ function  updateWaitingArea(data,isNotMqtt=false){
     });
 
 }
-// MQTT
+
+//============================================ MQTT ============================================
+
 let mqttMessagePrefix = window.__ENV__.MQTT_MESSAGE_PREFIX || 'simon/game/';
 const client = mqtt.connect("ws://" + window.__ENV__.MQTT_BROKER_URL + ":" + window.__ENV__.MQTT_BROKER_PORT , {
-    clientId: controllerId,
     username: window.__ENV__.MQTT_USERNAME,
     password: window.__ENV__.MQTT_PASSWORD,
-    will: {
-        topic: mqttMessagePrefix +"simon/game/disconnect",
-        payload: JSON.stringify({ controllerId: controllerId }),
-        qos: 1,
-        retain: false
-    }
+
 });
 client.on('connect', () => {
     console.log('✅ Connected to MQTT broker');
@@ -139,9 +107,11 @@ client.on("message",(topic, payload)=>{
         });
 
     }else if( topic===mqttMessagePrefix +'simon/game/events/playerJoined'){
-        if(isloading){
+        if(isLoading){
             return;
         }
+        console.log("UNten")
+        console.log(msg.waitingAreaData)
         updateWaitingArea(msg.waitingAreaData);
     }
     if(topic===mqttMessagePrefix + 'simon/game/events/players/progress') {
@@ -168,74 +138,23 @@ client.on("message",(topic, payload)=>{
         const {waitingAreaData} = msg
         updateWaitingArea(waitingAreaData, true);
     }
-})
 
-//============================================ Controller Edit Modal ============================================
-
-window.addEventListener("unload", () => {
-
-    const data = JSON.stringify({ controllerId: controllerId });
-    //navigator.sendBeacon("http://localhost:8080/api/controller/disconnect", data);
-    myPublishMessage("simon/game/disconnect", data, false);
-});
-
-client.on('connect', () => {
-    console.log('✅ Connected to MQTT broker');
-    client.subscribe(mqttMessagePrefix + 'simon/game/' + controllerId + '/+', err => {
-        if (err) {
-            console.error('❌ Subscribe Fehler:', err);
-        } else {
-            console.log(`📡 Subscribed to: simon/game/${controllerId}/+`);
-            myPublishMessage("simon/game/registerController", controllerId,false);
-        }
-    });
-});
-
-
-client.on('error', (err) => {
-    console.error('MQTT Fehler:', err);
-});
-
-client.on('close', () => {
-    console.log('MQTT Verbindung geschlossen');
-});
-
-client.on('offline', () => {
-    console.log('MQTT Client offline');
-});
-
-
-
-// Handle MQTT messages
-client.on('message', (topic, messageBuffer) => {
-    const raw = messageBuffer.toString();
-    let msg;
-    try {
-        msg = JSON.parse(raw);
-    } catch (e) {
-        console.error('❌ Fehler beim Parsen der Nachricht:', e);
-        return;
-    }
-    console.debug(`📥 Message received [${topic}]:`, msg);
-
-    if (topic === mqttMessagePrefix + `simon/game/${controllerId}/info`) {
+    if (topic === mqttMessagePrefix + `simon/game/events/info`) {
         updateLCD('Game', 'starts', 'in', '3s...');
         console.log('ℹ️ Info:', msg.info);
-    } else if (topic === mqttMessagePrefix + `simon/game/${controllerId}/start`) {
+    } else if (topic === mqttMessagePrefix + `simon/game/events/start`) {
         handleTopics(msg);
-    } else if (topic === mqttMessagePrefix + `simon/game/${controllerId}/sequence`) {
+    } else if (topic === mqttMessagePrefix + `simon/game/events/sequence`) {
         handleTopics(msg);
-
-    } else if (topic === mqttMessagePrefix + `simon/game/${controllerId}/playerData`) {
-        //localStorage.setItem("playerName", msg.name);
-        updateLCD('Welcome', 'to', 'Simon', `${msg.playerName}`);
-    }else if (topic === mqttMessagePrefix + `simon/game/${controllerId}/playerElimination`) {
-        const {round, totalMoveTime, score }=msg
-        updateLCD(`Game over!`, `Round: ${round}`, `Total time: ${totalMoveTime}ms`, `Score: ${score}`);
 
     }
+    if(topic=== mqttMessagePrefix+`simon/game/events/stop`){
+        updateLCD('END ', 'OF ', 'GAME', '');
+    }
 
-});
+})
+
+
 
 // Handle start and sequence topics
 function handleTopics(msg) {
@@ -245,17 +164,27 @@ function handleTopics(msg) {
         return;
     }
     resetInput(); // Clear previous state
-    isGameActive = true;
     currentRound = round;
     expectedSequence = sequence;
     maxTime = Math.floor(inputTimeLimit / 1000);
     playColorSequence(sequence, round);
 }
 
+// Reset input state
+function resetInput() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        console.debug("Cleared countdown interval");
+    }
+    maxTime = null;
+    currentRound = null;
+    showCountdownOnDisplay(0);
+
+}
+
 // Play color sequence and start timer
 async function playColorSequence(colors, currentRound) {
-    isGameActive = true;
-    isPlayerTurn = false;
 
     for (const color of colors) {
         const button = document.querySelector(`.color-button[data-color="${color.toLowerCase()}"]`);
@@ -269,12 +198,6 @@ async function playColorSequence(colors, currentRound) {
         }
     }
     let timeLeft = maxTime;
-    updateLCD(`Round: ${currentRound}`, "Your turn!", `Time: ${maxTime}s`, `Left: ${timeLeft}s`);
-
-    // Start countdown timer
-    inputStartTime = Date.now();
-    //let timeLeft = maxTime; // Local timeLeft to avoid shared state
-    console.debug("StartTime:", inputStartTime);
     if (countdownInterval) {
         clearInterval(countdownInterval);
         console.debug("Cleared existing countdown interval");
@@ -282,16 +205,9 @@ async function playColorSequence(colors, currentRound) {
     countdownInterval = setInterval(() => {
         timeLeft--;
         showCountdownOnDisplay(timeLeft);
-        // updateLCD(`Round: ${currentRound}`, "Your turn!", `Time: ${maxTime}s`, `Left: ${timeLeft}s`);
         if (timeLeft <= 0) {
             clearInterval(countdownInterval);
             countdownInterval = null;
-            if (!inputCompleted) {
-                console.debug("Input not completed:", inputCompleted);
-                handleFailure("Timeout - Eingabe nicht abgeschlossen");
-            } else {
-                resetInput();
-            }
         }
     }, 1000);
 }
@@ -311,15 +227,6 @@ function showCountdownOnDisplay(timeLeft) {
     lines[3].textContent = timeLeft ? `${timeLeft}s` : '';
 }
 
-// Publish MQTT message
-function myPublishMessage(topic, message, appendControllerId = false) {
-    let fullTopic = mqttMessagePrefix + topic;
-    if (appendControllerId) {
-        fullTopic += `/${controllerId}`;
-    }
-    client.publish(fullTopic, message);
-    console.debug(`📤 Published to ${fullTopic}:`, message);
-}
 
 // Play tone for button press
 function playTone(frequency, duration = 300) {
@@ -337,31 +244,5 @@ function playTone(frequency, duration = 300) {
     }, duration);
 }
 
-// Flash buttons for feedback
-function flashButtons(color) {
-    const buttons = document.querySelectorAll('.color-button');
-    buttons.forEach(btn => {
-        const originalColor = btn.style.backgroundColor;
-        btn.style.backgroundColor = color;
-        setTimeout(() => {
-            btn.style.backgroundColor = originalColor;
-        }, 500);
-    });
-}
-
-// Handle key mappings
-const keyMap = {
-    q: "green",
-    w: "red",
-    a: "yellow",
-    s: "blue"
-};
-document.addEventListener("keydown", (event) => {
-    const color = keyMap[event.key.toLowerCase()];
-    if (color) {
-        document.querySelector(`.color-button[data-color="${color}"]`)?.click();
-    }
-});
 
 
-updateLCD('Welcome', 'to', 'Simon', 'our lovely guest😄');

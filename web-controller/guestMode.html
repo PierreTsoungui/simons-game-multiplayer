@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <script src="env.js"></script>
-  <script src="guestMode.js"></script>
+  <script defer type="module" src="guestMode.js"></script>
   <style>
     html, body {
       height: 100%;
@@ -168,13 +168,22 @@
       <div class="lcd-line"></div>
     </div>
     <div class="joystick-container">
-      <button class="color-button green" data-color="green"></button>
-      <button class="color-button red" data-color="red"></button>
-      <button class="color-button yellow" data-color="yellow"></button>
-      <button class="color-button blue" data-color="blue"></button>
+      <button class="color-button green"   data-color="green"  data-tone="329" id="ready"></button>
+      <button class="color-button red"     data-color="red"    data-tone="261"></button>
+      <button class="color-button yellow"  data-color="yellow" data-tone="392"></button>
+      <button class="color-button blue"    data-color="blue"   data-tone="195"></button>
       <div class="joystick-center">●</div>
+
     </div>
   </div>
 </div>
+<script>
+  // Controller-ID aus URL übernehmen und anzeigen
+  console.log("MQTT_BROKER_URL: ", window.__ENV__.MQTT_BROKER_URL);
+  console.log("MQTT_BROKER_PORT: ", window.__ENV__.MQTT_BROKER_PORT);
+  console.log("MQTT_USERNAME: ", window.__ENV__.MQTT_USERNAME);
+  console.log("MQTT_PASSWORD: ", window.__ENV__.MQTT_PASSWORD);
+  console.log("MQTT_MESSAGE_PREFIX: ", window.__ENV__.MQTT_MESSAGE_PREFIX);
+</script>
 </body>
 </html>

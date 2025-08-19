@@ -113,3 +113,13 @@ yarn-error.log
 /esp32/.vscode/
 /esp32/.idea/
 /esp32/.clangd/
+redm
+doc1
+# Sensible Konfigurationsdateien
+git rm --cached .env
+git rm --cached web-controller/env.js
+
+# ordner
+git rm --cahed src/main/java/com/example/object
+git rm --cahed esp32-project
+git rm --cahed doc1
