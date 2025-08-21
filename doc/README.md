@@ -191,6 +191,6 @@ At the end of the game, the results of all players are displayed.
 ---
 
 ### 8. Highscore
-To check the top 10 high scores, click on 'Highscore'.
+To check the top 10 high scores, click on **Highscore**.
 
 ![Highscore](images/highscore.jpeg)
