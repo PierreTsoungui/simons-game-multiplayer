@@ -134,3 +134,63 @@ This allows participation in the multiplayer game easily, without extra permissi
 - The host can only start the game when at least two players are ready.
 
 This process ensures the multiplayer game runs smoothly and synchronously.
+
+## Application Walkthrough
+
+The following screenshots demonstrate the main features of the Simon Multiplayer Game step by step.  
+They provide a quick overview of the user journey — from login, lobby, and game start to the final results.
+This walkthrough demonstrates the functionality of the Simon Multiplayer Game, proving that the project is fully operational.
+
+### 1. Registration
+A new user can register with a username and password.  
+![Registration](doc/images/reg.jpeg)
+
+---
+### 2. Login
+Users can log in with their registered credentials.  
+![Login](doc/images/login.jpeg)
+
+---
+
+### 3. Controller View
+After logging in, the selected web controller is personalized with the given username.  
+![Web Controller](doc/images/web_controller.jpeg)
+
+---
+
+### 4. Lobby
+After a successful login, the user is redirected to the lobby where they can either join an existing game or start a new one.  
+![Lobby](doc/images/lobby.jpeg)
+
+#### 4.1 Lobby view after the second player joins
+![Lobby with 2 players](doc/images/lobby2.jpeg)
+
+---
+
+### 5. Game Start
+The Simon multiplayer game begins once at least two players are connected.  
+Players can set their status to **Ready** by pressing the green button.
+![Setting status to Ready](doc/images/toReady.jpeg)  
+![Lobby before game start](doc/images/lobby3.jpeg)
+#### 5.1 Live Demo
+![Game Start](doc/images/output.gif)
+
+---
+
+
+### 6. Guest Mode
+You can also log in as a guest to watch the game without playing.
+### 6.1 Live Demo
+![guestMode](doc/images/guestMode.gif)
+
+
+### 7. Results
+At the end of the game, the results of all players are displayed.  
+![Results](doc/images/results.jpeg)
+
+---
+
+### 8. Highscore
+To check the top 10 high scores, click on 'Highscore'.
+
+![Highscore](doc/images/highscore.jpeg)
