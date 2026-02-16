@@ -12,7 +12,6 @@ import com.example.game.GameStateManager;
 import com.example.http.HttpController;
 import com.example.http.HttpServerVerticle;
 import com.example.mqtt.MqttVerticle;
-import com.example.object.ObjectController;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -56,7 +55,7 @@ public class MainVerticle extends AbstractVerticle {
     private void setupHttpVerticle(HttpServerVerticle httpVerticle) {
 
         final List<HttpController> controllers = List.of(
-                new ObjectController(vertx),new PlayerController(vertx),new HighscoreController(vertx)
+                new PlayerController(vertx),new HighscoreController(vertx)
         );
 
         controllers.forEach(it -> it.registerRoutes(httpVerticle.router));

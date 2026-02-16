@@ -1,7 +1,7 @@
 package com.example.game;
 
 import com.example.database.DatabaseClient;
-import com.example.object.ObjectController;
+
 import com.example.player.PlayerInfo;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
@@ -24,7 +24,7 @@ import java.util.*;
 
 public class GameService {
 
-    private static final Logger logger = LoggerFactory.getLogger(ObjectController.class);
+    private static final Logger logger = LoggerFactory.getLogger(GameService.class);
     GameStateManager gsm;
     public static  volatile GameModel gameModel;
     private static GameService instance;
